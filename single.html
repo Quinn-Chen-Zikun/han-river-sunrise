@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <meta name="description" content="零点代驾：在首尔步行或驾车穿过街巷与汉江两岸，体验昼夜变化、街头故事和一场夜班代驾。">
+    <meta name="description" content="汉江朝晖 · 首尔：在首尔步行或驾车穿过街巷与汉江两岸，体验昼夜变化、街头故事和一场夜班代驾。">
     <meta name="theme-color" content="#082b49">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="零点代驾">
-    <title>零点代驾</title>
+    <meta name="apple-mobile-web-app-title" content="汉江朝晖">
+    <title>汉江朝晖 · 首尔</title>
     <style>
 /* Base, HUD, intro, controls and responsive layouts */
 :root {
@@ -2830,7 +2830,7 @@ body:has(#toast.show) #cityRadio { visibility: hidden; }
     </style>
   </head>
   <body>
-    <canvas id="world" tabindex="0" aria-label="零点代驾，三维开放城市"></canvas>
+    <canvas id="world" tabindex="0" aria-label="汉江朝晖，三维开放城市"></canvas>
     <div id="vignette"></div>
     <div id="hud">
       <div id="districtToast" role="status"><b id="area">종로 · 钟路</b><small id="district"></small></div>
@@ -2904,8 +2904,8 @@ body:has(#toast.show) #cityRadio { visibility: hidden; }
     </div>
     <div class="intro" id="intro">
       <div class="intro-badge">一条江 · 一座城 · 你的路线</div>
-      <div class="serial">SEOUL · 夜班代驾</div>
-      <h1>零点<br><em>代驾</em></h1>
+      <div class="serial">SEOUL · 城市漫游</div>
+      <h1>汉江<br><em>朝晖</em></h1>
       <div class="poem">서울 대리운전</div>
       <p class="description">穿过钟路的霓虹街巷，驰骋汉江两岸。跟随金色标记，开启你的首尔故事。</p>
       <div id="loadingStatus" role="status">准备街区…</div>
@@ -5549,7 +5549,7 @@ void main(){
       SN.ledTick = tick;
       const g = SN.ledCanvas.getContext("2d");
       const ad = Math.floor(tick / 50) % 3;
-      const titles = ["한걸음배송", "백구물산", "零点代驾 · 영시 대리"];
+      const titles = ["한걸음배송", "백구물산", "汉江朝晖 · 영시 대리"];
       const lines = ["让每一条街都准时  ·  한 걸음 먼저", "城市更新 · 街坊生活  ·  서울의 내일", "夜路慢一点 · 平安到家  ·  안전 귀가"];
       g.fillStyle = ["#143d51", "#272542", "#14382f"][ad]; g.fillRect(0, 0, 512, 128);
       g.fillStyle = ["#54ffe2", "#ff6dbb", "#ffe06b"][ad]; g.fillRect(0, 0, 8, 128);

@@ -1,8 +1,8 @@
-# 零点代驾
+# 汉江朝晖 · 首尔
 
 在阳光鲜明的首尔街巷与汉江两岸步行、驾车、接取委托，或自由探索城市。第三人称视角，支持桌面键鼠与手机横屏触控。
 
-[开始游玩](https://quinn-chen-zikun.github.io/seoul-streets/)
+[开始游玩](https://quinn-chen-zikun.github.io/han-river-sunrise/)
 
 也可直接打开 `index.html`，或打开单文件版 `single.html`。两者内容、操作与存档格式相同；三维引擎及后期效果从 CDN 载入，首次加载需要网络。浏览器禁用存储时仍可游玩，但关闭页面后不会保留本次进度。
 

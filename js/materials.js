@@ -1245,7 +1245,7 @@
       SN.ledTick = tick;
       const g = SN.ledCanvas.getContext("2d");
       const ad = Math.floor(tick / 50) % 3;
-      const titles = ["한걸음배송", "백구물산", "零点代驾 · 영시 대리"];
+      const titles = ["한걸음배송", "백구물산", "汉江朝晖 · 영시 대리"];
       const lines = ["让每一条街都准时  ·  한 걸음 먼저", "城市更新 · 街坊生活  ·  서울의 내일", "夜路慢一点 · 平安到家  ·  안전 귀가"];
       g.fillStyle = ["#143d51", "#272542", "#14382f"][ad]; g.fillRect(0, 0, 512, 128);
       g.fillStyle = ["#54ffe2", "#ff6dbb", "#ffe06b"][ad]; g.fillRect(0, 0, 8, 128);
