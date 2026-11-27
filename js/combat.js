@@ -89,22 +89,44 @@
   };
 
   SN.spawnTracer = function spawnTracer(from, to, enemy = false) {
+    SN.bulletDelta.subVectors(to, from);
+    const dist = SN.bulletDelta.length();
+    if (!Number.isFinite(dist) || dist < 0.02)
+      return;
     const b = SN.bullets[SN.bulletCursor++ % SN.bullets.length];
     b.from.copy(from);
-    b.dir.subVectors(to, from);
-    b.dist = b.dir.length();
-    if (b.dist < 0.02)
-      return;
-    b.dir.multiplyScalar(1 / b.dist);
-    b.len = Math.min(1.5, Math.max(0.28, b.dist));
+    b.dist = dist;
+    b.dir.copy(SN.bulletDelta).multiplyScalar(1 / dist);
+    b.len = Math.min(1.5, Math.max(0.28, dist));
     b.travel = b.len * 0.5;
     b.total = 0.068;
     b.life = b.total;
-    b.speed = SN.clamp(b.dist / 0.048, 160, 1800);
+    b.speed = SN.clamp(dist / 0.048, 160, 1800);
     b.enemy = enemy;
     b.mesh.material.color.setHex(enemy ? 0xff8a62 : 0xffe6b8);
-    b.mesh.material.opacity = 0.92;
+    SN.poseTracer(b);
     b.mesh.visible = true;
+  };
+
+  // Single writer for the quad transform, so a just-spawned streak already has its
+  // real length/orientation instead of sitting at the default 1m unit quad.
+  SN.poseTracer = function poseTracer(b) {
+    const head = Math.min(b.travel, b.dist), tail = Math.max(0, head - b.len);
+    SN.bulletPos.copy(b.from).addScaledVector(b.dir, (head + tail) * 0.5);
+    b.mesh.position.copy(SN.bulletPos);
+    SN.bulletView.copy(SN.camera.position).sub(SN.bulletPos);
+    SN.bulletRight.crossVectors(b.dir, SN.bulletView);
+    if (SN.bulletRight.lengthSq() < 0.00001) {
+      SN.bulletView.set(Math.abs(b.dir.x) < 0.9 ? 1 : 0, Math.abs(b.dir.x) < 0.9 ? 0 : 1, 0);
+      SN.bulletRight.crossVectors(b.dir, SN.bulletView);
+    }
+    SN.bulletRight.normalize();
+    SN.bulletNormal.crossVectors(SN.bulletRight, b.dir).normalize();
+    SN.bulletMatrix.makeBasis(SN.bulletRight, b.dir, SN.bulletNormal);
+    b.mesh.quaternion.setFromRotationMatrix(SN.bulletMatrix);
+    const fade = SN.clamp(b.life / b.total, 0, 1);
+    b.mesh.scale.set(0.032, Math.max(0, head - tail) * (0.72 + 0.28 * fade), 1);
+    b.mesh.material.opacity = 0.92 * fade;
   };
 
   SN.updateTracers = function updateTracers(dt) {
@@ -118,23 +140,7 @@
         b.mesh.visible = false;
         continue;
       }
-      const head = Math.min(b.travel, b.dist), half = b.len * 0.5;
-      SN.bulletPos.copy(b.from).addScaledVector(b.dir, Math.max(0, head - half));
-      b.mesh.position.copy(SN.bulletPos);
-      SN.bulletView.copy(SN.camera.position).sub(SN.bulletPos);
-      if (SN.bulletView.lengthSq() < 0.00001)
-        SN.bulletView.set(0, 1, 0);
-      SN.bulletRight.crossVectors(b.dir, SN.bulletView);
-      if (SN.bulletRight.lengthSq() < 0.00001)
-        SN.bulletRight.set(Math.abs(b.dir.x) > 0.9 ? 0 : 1, Math.abs(b.dir.x) > 0.9 ? 1 : 0, 0);
-      else
-        SN.bulletRight.normalize();
-      SN.bulletNormal.crossVectors(SN.bulletRight, b.dir).normalize();
-      SN.bulletMatrix.makeBasis(SN.bulletRight, b.dir, SN.bulletNormal);
-      b.mesh.quaternion.setFromRotationMatrix(SN.bulletMatrix);
-      const fade = SN.clamp(b.life / b.total, 0, 1);
-      b.mesh.scale.set(0.032, b.len * (0.72 + 0.28 * fade), 1);
-      b.mesh.material.opacity = 0.92 * fade;
+      SN.poseTracer(b);
     }
   };
 
@@ -1502,10 +1508,32 @@
     // Short additive tracer streaks. One quad per live round, oriented to the camera
     // so it reads from every angle without a full-length line hanging in the air.
     SN.tracerGeometry = new SN.T.PlaneGeometry(1, 1);
+    SN.tracerCanvas = document.createElement("canvas");
+    SN.tracerCanvas.width = 32;
+    SN.tracerCanvas.height = 128;
+    SN.tracerCtx = SN.tracerCanvas.getContext("2d");
+    SN.tracerWidthGrad = SN.tracerCtx.createLinearGradient(0, 0, 32, 0);
+    SN.tracerWidthGrad.addColorStop(0, "rgba(255,255,255,0)");
+    SN.tracerWidthGrad.addColorStop(0.5, "rgba(255,255,255,1)");
+    SN.tracerWidthGrad.addColorStop(1, "rgba(255,255,255,0)");
+    SN.tracerCtx.fillStyle = SN.tracerWidthGrad;
+    SN.tracerCtx.fillRect(0, 0, 32, 128);
+    SN.tracerLengthGrad = SN.tracerCtx.createLinearGradient(0, 0, 0, 128);
+    SN.tracerLengthGrad.addColorStop(0, "rgba(255,255,255,0)");
+    SN.tracerLengthGrad.addColorStop(0.2, "rgba(255,255,255,1)");
+    SN.tracerLengthGrad.addColorStop(0.8, "rgba(255,255,255,1)");
+    SN.tracerLengthGrad.addColorStop(1, "rgba(255,255,255,0)");
+    SN.tracerCtx.globalCompositeOperation = "destination-in";
+    SN.tracerCtx.fillStyle = SN.tracerLengthGrad;
+    SN.tracerCtx.fillRect(0, 0, 32, 128);
+    SN.tracerCtx.globalCompositeOperation = "source-over";
+    SN.tracerTexture = SN.canvasTexture(SN.tracerCanvas);
     SN.bullets = [];
     for (let i = 0; i < 72; i++) {
       const material = new SN.T.MeshBasicMaterial({
         color: 0xffe3b0,
+        map: SN.tracerTexture,
+        alphaTest: 0.01,
         transparent: true,
         opacity: 0,
         depthWrite: false,
@@ -1513,6 +1541,7 @@
         side: SN.T.DoubleSide
       });
       const mesh = new SN.T.Mesh(SN.tracerGeometry, material);
+      mesh.scale.set(0.032, 0, 1);
       mesh.visible = false;
       mesh.frustumCulled = false;
       SN.scene.add(mesh);
@@ -1535,6 +1564,7 @@
     SN.bulletNormal = new SN.T.Vector3();
     SN.bulletMatrix = new SN.T.Matrix4();
     SN.bulletPos = new SN.T.Vector3();
+    SN.bulletDelta = new SN.T.Vector3();
     // Enemy muzzle flashes share a small sprite pool and one short-lived light.
     SN.enemyMuzzleLight = new SN.T.PointLight(0xffb06a, 0, 14, 2);
     SN.scene.add(SN.enemyMuzzleLight);
@@ -1633,7 +1663,19 @@
     SN.sparkGeo = new SN.T.BufferGeometry();
     SN.sparkGeo.setAttribute("position", new SN.T.BufferAttribute(SN.sparkPositions, 3));
     SN.sparkGeo.setAttribute("color", new SN.T.BufferAttribute(SN.sparkColors, 3));
+    SN.sparkCanvas = document.createElement("canvas");
+    SN.sparkCanvas.width = SN.sparkCanvas.height = 32;
+    SN.sparkCtx = SN.sparkCanvas.getContext("2d");
+    SN.sparkGrad = SN.sparkCtx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    SN.sparkGrad.addColorStop(0, "rgba(255,255,255,1)");
+    SN.sparkGrad.addColorStop(0.45, "rgba(255,255,255,.55)");
+    SN.sparkGrad.addColorStop(1, "rgba(255,255,255,0)");
+    SN.sparkCtx.fillStyle = SN.sparkGrad;
+    SN.sparkCtx.fillRect(0, 0, 32, 32);
+    SN.sparkTexture = SN.canvasTexture(SN.sparkCanvas);
     SN.sparkPoints = new SN.T.Points(SN.sparkGeo, new SN.T.PointsMaterial({
+      map: SN.sparkTexture,
+      alphaTest: 0.01,
       size: 0.085,
       vertexColors: true,
       transparent: true,

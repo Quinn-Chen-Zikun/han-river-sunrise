@@ -1167,6 +1167,48 @@
         for (const batch of SN.buildingBatches) for (const b of batch) assert(!b.pitch && !b.rx && !b.rz, "建筑发生地形倾斜");
         assert(SN.carColors.includes(0x242d3c) && SN.carColors.includes(0x9daebe), "缺少黑色与银色车漆");
       }],
+      [0.73, "combat-tracer-birth", () => {
+        // The offline audit replaces drawing objects; this checks real Three.js transforms and canvas alpha.
+        if (!SN.renderer.domElement) return;
+        const cursor = SN.bulletCursor, b = SN.bullets[cursor % SN.bullets.length], camera = SN.camera.position.clone();
+        const keys = ["dist", "len", "travel", "total", "life", "speed", "enemy"];
+        const saved = Object.fromEntries(keys.map(key => [key, b[key]]));
+        const fromSaved = b.from.clone(), dirSaved = b.dir.clone(), pos = b.mesh.position.clone(), scale = b.mesh.scale.clone(), rotation = b.mesh.quaternion.clone();
+        const visible = b.mesh.visible, opacity = b.mesh.material.opacity, color = b.mesh.material.color.clone();
+        try {
+          for (const direction of [new SN.T.Vector3(1, 0, 0), new SN.T.Vector3(0, 1, 0), new SN.T.Vector3(1, 2, 3).normalize()]) {
+            const from = new SN.T.Vector3(100, 10, 100), to = from.clone().addScaledVector(direction, 6);
+            SN.camera.position.copy(from).addScaledVector(direction, -5);
+            SN.bulletCursor = cursor; b.mesh.position.set(900, 900, 900); b.mesh.scale.set(1, 1, 1);
+            SN.spawnTracer(from, to, true);
+            assert(b.mesh.visible && b.mesh.scale.x < 0.05 && b.mesh.scale.y > 0 && b.mesh.scale.y < 1, "敌人弹道出生帧仍显示单位方片");
+            const along = b.mesh.position.clone().sub(from).dot(direction);
+            assert(along > 0 && along < 1 && b.mesh.position.distanceTo(from) < 1, "复用弹道残留旧位置");
+            const q = b.mesh.quaternion;
+            assert([q.x, q.y, q.z, q.w].every(Number.isFinite) && Math.abs(q.lengthSq() - 1) < 0.00001, "正对弹道时旋转基无效");
+            b.travel = b.dist; SN.poseTracer(b);
+            const end = b.mesh.position.clone().sub(from).dot(direction) + b.mesh.scale.y * 0.5;
+            assert(end <= b.dist + 0.00001, "弹道光片伸过命中点");
+          }
+          const next = SN.bulletCursor, life = b.life, position = b.mesh.position.clone();
+          SN.spawnTracer(b.from, b.from, true);
+          SN.spawnTracer(b.from, new SN.T.Vector3(NaN, 0, 0), true);
+          assert(SN.bulletCursor === next && b.life === life && b.mesh.position.distanceTo(position) === 0, "无效射击覆盖了活跃弹道");
+          assert(SN.bullets.every(round => round.mesh.material.map === SN.tracerTexture), "弹道未共享透明轮廓");
+          assert(SN.sparkPoints.material.map === SN.sparkTexture && SN.sparkPoints.material.alphaTest > 0, "命中火花仍使用方点");
+          {
+            for (const canvas of [SN.tracerCanvas, SN.sparkCanvas]) {
+              const ctx = canvas.getContext("2d"), center = ctx.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data[3];
+              const corner = ctx.getImageData(0, 0, 1, 1).data[3];
+              assert(center > 180 && corner < 24, "射击特效透明边缘缺失");
+            }
+          }
+        } finally {
+          SN.bulletCursor = cursor; Object.assign(b, saved); b.from.copy(fromSaved); b.dir.copy(dirSaved);
+          b.mesh.position.copy(pos); b.mesh.scale.copy(scale); b.mesh.quaternion.copy(rotation); b.mesh.visible = visible;
+          b.mesh.material.opacity = opacity; b.mesh.material.color.copy(color); SN.camera.position.copy(camera);
+        }
+      }],
       [12.38, "m9-camera-overhang-foliage", () => {
         const bins = SN.cameraPropBins;
         try {
