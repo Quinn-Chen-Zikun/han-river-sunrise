@@ -9291,6 +9291,45 @@ void main(){
     return SN.tileNoise(x, z, 4096, 731) * 0.58 + SN.tileNoise(x * 2.07 + 13, z * 2.07 - 9, 4096, 883) * 0.28 + SN.tileNoise(x * 4.13 - 7, z * 4.13 + 17, 4096, 997) * 0.14;
   };
 
+  // District amplitude table. The old city floor and both built-up river banks
+  // are urban plain: hill height is multiplied down to zero there so terrain,
+  // road profiles, foundations and pedestrians all share one flat surface.
+  // Only Namsan and the surrounding mountain backdrop keep their full relief.
+  SN.terrainPlainZones = [
+    [0, -800, 820, 350],       // 종로 · 광화문
+    [500, -1360, 360, 380],    // 북촌
+    [340, -470, 540, 300],     // 명동 · 남대문
+    [-1230, -620, 360, 310],   // 서울역
+    [-1050, -190, 400, 230],   // 이태원 · 용산
+    [-1900, -730, 650, 630],   // 홍대 · 신촌
+    [-1050, 450, 690, 235],    // 여의도
+    [300, 1430, 1000, 600],    // 강남
+    [1600, 1410, 550, 540],    // 삼성
+    [2700, 1440, 700, 800],    // 잠실
+    [1760, -350, 750, 570],    // 성수
+    [-2900, -1930, 620, 1150]  // 김포
+  ];
+  SN.terrainAmplitude = function terrainAmplitude(x, z) {
+    // Namsan keeps its cone; the mask fades only where the natural hill already
+    // tapers to zero, so the summit tower and cable stations stay put.
+    const namsan = Math.hypot(x / 300, (z + 340) / 285);
+    let preserve = 1 - SN.smoothRange(1, 1.24, namsan), built = 0;
+    for (let i = 0; i < SN.terrainPlainZones.length; i++) {
+      const p = SN.terrainPlainZones[i],
+        qx = (x - p[0]) / p[2],
+        qz = (z - p[1]) / p[3],
+        q2 = qx * qx + qz * qz;
+      if (q2 >= 1.45)
+        continue;
+      const mask = 1 - SN.smoothRange(1, 1.18, Math.sqrt(q2));
+      if (mask > built)
+        built = mask;
+    }
+    // Outside the built districts the amplitude is 1, which keeps Bugaksan,
+    // Inwangsan, Naksan and the southern ridges as independent background hills.
+    return 1 - built * (1 - preserve);
+  };
+
   SN.hillHeight = function hillHeight(x, z) {
     let height = 0;
     for (let i = 0; i < SN.hillDefs.length; i++) {
@@ -9312,7 +9351,7 @@ void main(){
     // Cut a level shopping terrace into the foot of Namsan; buildings stay upright.
     const shoppingEdge = Math.max(290 - x, x - 550, Math.abs(z + 430) - 42);
     height *= SN.smoothRange(0, 55, shoppingEdge);
-    return height;
+    return height * SN.terrainAmplitude(x, z);
   };
 
   SN.terrainSlope = function terrainSlope(x, z) {
@@ -9970,8 +10009,9 @@ void main(){
     SN.island = { x: -1050, z: 450, rx: 690, rz: 235 };
     SN.lakePark = { x: 2720, z: 1730, rx: 150, rz: 95 };
     SN.bridges = [];
-    // Bugaksan and Inwangsan behind the palace, Namsan in the middle, hills on every edge.
-    // Smooth compact foothills, warped ridges and broad valleys; north is -Z.
+    // Bugaksan and Inwangsan behind the palace, Namsan in the middle, ridges on every edge.
+    // Keep hill order stable because each index seeds its terrain detail. The
+    // district amplitude mask flattens the urban plain around the landmarks.
     SN.hillDefs = [
       [-300, -2930, 1250, 510],
       [700, -3070, 1000, 430],
@@ -12764,6 +12804,25 @@ void main(){
     SN.urbanBlockGeo = new SN.T.ExtrudeGeometry(SN.bevelShape, { depth: 1, bevelEnabled: false, steps: 1, curveSegments: 1 });
     SN.urbanBlockGeo.rotateX(-SN.PI / 2);
     SN.urbanBlockGeo.translate(0, -0.5, 0);
+    // District street-wall bands: [min floors, max floors, tower chance, reserve chance].
+    // The reserve leaves a small deterministic gap every few lots, so the core
+    // reads as separate shopfronts instead of one continuous high wall.
+    const wallBands = {
+      jongno: [4, 8, 0, 0.09],
+      bukchon: [2, 4, 0, 0.14],
+      myeong: [3, 6, 0, 0.07],
+      station: [3, 7, 0.05, 0.09],
+      namsan: [2, 4, 0, 0.16],
+      itaewon: [2, 5, 0.05, 0.10],
+      hongdae: [3, 6, 0.08, 0.08],
+      yeouido: [4, 8, 0.22, 0.16],
+      gangnam: [4, 9, 0.28, 0.14],
+      samseong: [5, 11, 0.30, 0.16],
+      jamsil: [4, 9, 0.24, 0.18],
+      seongsu: [3, 7, 0.06, 0.12],
+      gimpo: [2, 4, 0, 0.10],
+      default: [3, 7, 0.05, 0.10]
+    };
     // Roads, bends and rear lanes establish blocks; frontage widths establish lots.
     // Large lots belong to occasional towers, while their neighbours stay smaller.
     for (let roadIndex = 0; roadIndex < SN.roads.length; roadIndex++) {
@@ -12787,23 +12846,30 @@ void main(){
             const lotSeed = (Math.imul(Math.round(a[0]) + 4300, 73856093) ^ Math.imul(Math.round(a[1]) + 4700, 19349663) ^ Math.imul(lotIndex + 1, 83492791) ^ (side > 0 ? 19471 : 59183)) >>> 0,
               random = SN.lotRng(lotSeed),
               district = SN.cityDistrictAt(a[0] + tx * along, a[1] + tz * along).id,
-              business = ["gangnam", "samseong", "jamsil", "yeouido"].includes(district),
+              wall = wallBands[district] || wallBands.default,
               shopping = district === "myeong",
-              tower = business && road.width >= 20 && lotIndex % 3 !== 1;
+              tower = road.width >= 20 && wall[2] > 0 && random() < wall[2],
+              reserve = !tower && random() < wall[3];
             let era = tower ? "tower" : random() < 0.56 ? "brick" : "office";
             if (era === lastEra && era !== "tower")
               era = era === "brick" ? "office" : "brick";
-            lastEra = era;
-            const w = tower ? 25 + random() * 17 : shopping ? 8.5 + random() * 7.5 : 10 + random() * 13,
-              d = tower ? 25 + random() * 16 : 14 + random() * 11,
+            const floors = wall[0] + Math.floor(random() * (wall[1] - wall[0] + 1)),
+              w = tower ? 22 + random() * 11 : shopping ? 8.5 + random() * 7.5 : 10 + random() * 13,
+              d = tower ? 22 + random() * 11 : 14 + random() * 11,
               gap = lotIndex % 5 === 3 ? 5.5 + random() * 3 : 1.8 + random() * 1.7,
-              setback = 0.12 + random() * 0.18,
+              setback = 0.35 + random() * 0.55,
               off = road.width / 2 + (road.sidewalkW || 3.5) + 0.4 + setback + d / 2,
               center = along + w / 2,
               cx = a[0] + tx * center + nx * off * side,
               cz = a[1] + tz * center + nz * off * side,
               yaw = Math.atan2(-nx * side, -nz * side),
-              h = tower ? 70 + Math.floor(random() * 32) * 3.6 : era === "brick" ? 6.6 + Math.floor(random() * 3) * 3.1 : 13.4 + Math.floor(random() * (shopping ? 4 : 8)) * 3.2;
+              h = tower ? 48 + Math.floor(random() * 6) * 7 : 3.15 * floors + random() * 0.9;
+            if (reserve) {
+              along += w + gap + 5;
+              lotIndex++;
+              continue;
+            }
+            lastEra = era;
             if (center + w / 2 < len - 16) {
               const lot = SN.addBuilding(cx, cz, w, d, h, tower, yaw, lotSeed, era);
               if (lot) {
@@ -26076,7 +26142,7 @@ void main(){
 (function (SN) {
   SN.registerInit(25.5, function initializeStoryContent() {
     const go = (text, x, z, extra = {}) => Object.assign({ type: "go", text, x, z, r: 7 }, extra);
-    const collect = (text, x, z) => ({ type: "collect", text: text + " · E 收取", x, z, r: 3 });
+    const collect = (text, x, z, extra = {}) => Object.assign({ type: "collect", text: text + " · E 收取", x, z, r: 3 }, extra);
     const fight = (text, x, z, count, melee = false) => ({ type: "fight", text, x, z, count, melee });
     const drive = (text, x, z, extra = {}) => Object.assign({ type: "drive", text, x, z, r: 12 }, extra);
     const escape = heat => ({ type: "escape", text: "离开搜索圈，摆脱 " + heat + "★ 通缉", heat, seconds: 180 });
@@ -26091,8 +26157,11 @@ void main(){
       outro: "证据已交接。下一位联系人已在地图标记。"
     }, extra);
     const first = SN.storyMissions[0];
-    first.brief = "韩序温请初到首尔的你送一份货单。先学会走街、开车与自保，再决定替谁跑下一趟。";
-    first.dialogue = ["韩序温：首尔不会替新人留位置。先把送货单对清楚，别急着站队。", "韩序温：记下人说的话，也留下纸上的证据。两者未必一样。"];
+    first.brief = "韩序温把第一单交给你：去钟路便利店取货单，开出租车送到明洞咖啡店，签回执，再把车停回钟路。准时、完好、别惹事。";
+    first.dialogue = ["韩序温：第一单不远。取件、送到、签回执，再把车停回原位。", "韩序温：首尔的路会自己教你规矩。今天先别跟任何人较劲。"];
+    first.outro = "第一单结清：¥350。回执上却出现了两种金额，韩序温请你去明洞核对。";
+    first.reward = 350;
+    first.respect = 18;
     first.totalLimit = 360;
     SN.storyMissions[1].totalLimit = 480;
     SN.storyMissions[2].totalLimit = 600;
@@ -26102,16 +26171,16 @@ void main(){
       if (o.type === "go" && !o.contact) { o.x = 578; o.z = -444; }
       if (o.type === "tail") { o.x = 620; o.z = -430; o.route = [[760, -430], [760, -640], [560, -640], [560, -430]]; }
     }
+    // First delivery loop: pickup → taxi → drop-off → receipt → return the car → hand in.
+    // The six checkpoint slots and every authored coordinate stay unchanged.
     first.objectives = [
-      go("走到便利店门口", -39, -778, { r: 3, hint: "WASD / 左摇杆移动 · Shift / 疾跑加速" }),
+      go("走到便利店门口取货单", -39, -778, { r: 3, hint: "WASD / 左摇杆移动 · Shift / 疾跑加速 · 跟着金色指引走" }),
       vehicle("进入街边准备好的出租车", -66, -786, 3, { hint: "靠近车辆按 F / 上车按钮" }),
-      drive("驾车把送货单送到咖啡店街口", 34, -637, { hint: "W 加速 · S 刹车倒车 · 空格 / 手刹转弯" }),
-      fight("下车击退两名堵路打手", 34, -609, 2, true),
-      escape(1),
-      go("回钟路将单据交给韩序温", -30, -765, { contact: "mentor", r: 3 })
+      drive("驾驶出租车送到咖啡店街口并停稳", 34, -637, { vehicleType: 3, maxSpeed: 1, hint: "W 加速 · S 刹车倒车 · 空格 / 手刹转弯 · 跟着金色路线" }),
+      collect("在咖啡店门口签收回执", 34, -609, { hint: "F 下车 · 步行到咖啡店门口按 E 签收回执" }),
+      drive("驾驶出租车把回执带回钟路并停稳", -66, -786, { vehicleType: 3, maxSpeed: 1, hint: "重新上车，沿金色路线开回钟路停车点停稳" }),
+      go("下车把回执交给韩序温", -30, -765, { contact: "mentor", r: 3, hint: "下车后走到金色 H 圆环交付回执" })
     ];
-    first.objectives[3].hint = "F 下车 · 左键 / 攻击挥拳 · H / 收枪恢复徒手";
-    first.objectives[4].hint = "驶离红圈并躲开巡警视线 · 星星闪烁后逐渐消失";
     // Preserve the first campaign and its checkpoint indices for existing saves.
     SN.storyMissions[1].giver = "detective";
     SN.storyMissions[2].giver = "informant";
@@ -26518,7 +26587,7 @@ void main(){
         SN.failMission(o.escortCar ? "证人护送中断" : "委托车辆受损或被遗弃"); return false;
       }
       return !!car && SN.player.car === car && (o.vehicleType === undefined || car.type === o.vehicleType) &&
-        distance < (o.r || 12) && Math.abs(car.speed) < 6;
+        distance < (o.r || 12) && Math.abs(car.speed) < (o.maxSpeed === undefined ? 6 : o.maxSpeed);
     }
     if (o.type === "escort") {
       const e = SN.escortActor, d = Math.hypot(e.x - SN.player.x, e.z - SN.player.z);
@@ -27071,14 +27140,25 @@ void main(){
         assert(!SN.arrestState && !SN.$("arrestScreen").classList.contains("visible") && SN.canControl(), "被捕后无法立即重试");
         const cash = SN.money, respect = SN.progression.respect;
         for (let i = 0; i < 6; i++) {
-          const a = SN.campaign.active, o = SN.activeObjective(); assert(a && a.step === i, "教学目标顺序错误");
+          const a = SN.campaign.active, o = SN.activeObjective(); assert(a && a.step === i, "教学目标顺序错误：预期 " + i + "，当前 " + (a && a.step) + "，目标 " + (o && o.type));
           if (o.type === "vehicle") SN.player.car = a.contractCar;
+          else if (o.type === "drive") {
+            SN.player.car = a.contractCar || SN.loanCar;
+            move(o.x, o.z); SN.player.car.speed = 2.5;
+            SN.updateMission(0.1); assert(a.step === i, "送单车辆未停稳就推进目标");
+            SN.player.car.speed = SN.player.car.vx = SN.player.car.vz = 0;
+          }
+          else if (o.type === "collect") {
+            move(o.x, o.z); SN.interactPulse = true;
+            SN.updateMission(0.1); assert(a.step === i, "坐在车里即可签收回执");
+            SN.player.car = null; SN.interactPulse = true;
+          }
           else if (o.type === "fight") { SN.player.car = null; move(o.x, o.z); SN.encounterActors.forEach(e => { e.health = 0; }); }
           else if (o.type === "escape") { SN.heat = 0; SN.clearWantedResponse(); }
           else move(o.x, o.z);
           SN.updateMission(0.1);
         }
-        assert(!SN.campaign.active && SN.campaign.progress === 1 && SN.money === cash + 650 && SN.progression.respect > respect, "教学结算或后续解锁失败");
+        assert(!SN.campaign.active && SN.campaign.progress === 1 && SN.money === cash + SN.storyMissions[0].reward && SN.progression.respect > respect, "教学结算或后续解锁失败");
         reset(); SN.campaign.progress = 0;
       }],
       [11.4, "contract-vehicle-retry", () => {
@@ -33432,9 +33512,12 @@ void main(){
       assert(checked > 60000, "路面采样不足：" + checked);
       assert(worstUp < 0.45, "路面突然凸起，车会被弹飞：" + worstAt);
       const underBridge = SN.surfaceHeight(-165.2, -199.4, 1.2);
-      const underStair = SN.surfaceHeight(-41.7, -278.3, 79.8);
+      const mountainRoad = SN.roadSample(-41.7, -278.3);
+      assert(mountainRoad && mountainRoad.profile.name === "남산순환로", "南山下层车道缺失");
+      const roadFloor = mountainRoad.height + 0.17;
+      const underStair = SN.surfaceHeight(-41.7, -278.3, roadFloor);
       assert(underBridge < 2.5, "高架桥下的路面被桥面顶起：" + underBridge.toFixed(2));
-      assert(underStair < 81, "南山步道盖住了下方车道：" + underStair.toFixed(2));
+      assert(Math.abs(underStair - roadFloor) < 0.45, "南山步道盖住了下方车道：" + underStair.toFixed(2));
       console.log("SMOKE road-surface: samples=" + checked + " worstUp=" + worstUp.toFixed(3) + "m at " + worstAt);
     }]);
     SN.smoke.stages.push([20.3, "lawns-dressed", () => {
@@ -33810,7 +33893,7 @@ void main(){
             "车辆模型未挂接：" + car.type + "/" + car.modelKey + "/" + (car.modelRoot && car.modelRoot.parent ? car.modelRoot.parent.name || car.modelRoot.parent.type : "null") + "/" + (car.body ? car.body.name || car.body.type : "nobody"));
           check(car.modelPaint && car.modelGlass.length >= glassNeeded && car.modelWheels.length >= 3, "车辆材质、玻璃或车轮缺失");
         }
-        const taxi = SN.cars.find(car => car.type === 3 && car.modelKey === "taxi");
+        const taxi = SN.cars.find(car => car.type === 3 && car.modelKey === "taxi" && car.paintColor === 0xff7a16);
         check(taxi && taxi.modelPaint.color.getHex() === SN.srgb(0xff7a16).getHex(), "出租车不是橙色");
         check(M.carPrototypes.pickup && M.carPrototypes.police && M.carPrototypes.taxi, "缺少出租车、警车或皮卡原型");
         check(modeled.every(car => car.modelWheels.every(wheel => wheel.spin && wheel.pivot)), "车轮转向节点不完整");
@@ -34701,6 +34784,10 @@ void main(){
         check(a.status === "running" && a.step === step && SN.heat === 0 && !SN.carjack && !SN.encounterActors.length, "失败重试未清理状态");
       }
       if (o.type === "go") { leave(); SN.smokeWalkTo(o, tick, Math.min(1.5, o.r * 0.6)); }
+      else if (o.type === "collect") {
+        leave(); SN.smokeWalkTo(o, tick, Math.min(1.5, o.r * 0.6));
+        SN.interactPulse = true; tick(1 / 30);
+      }
       else if (o.type === "vehicle") enter(a.contractCar);
       else if (o.type === "drive") {
         if (!SN.player.car) enter(SN.loanCar);
@@ -34861,6 +34948,15 @@ void main(){
           SN.loadCampaign(copy(legacy)); assert(SN.campaign.active.step === 5 && SN.campaign.checkpoint.step === 5, "旧取证检查点迁移失败");
           legacy.active.step = SN.storyMissions[3].objectives.length - 1;
           SN.loadCampaign(copy(legacy)); assert(!SN.campaign.active && !SN.campaign.checkpoint, "迁移后越界检查点未清理");
+          const previousArrival = copy(expected);
+          previousArrival.schema = 5; previousArrival.progress = 0;
+          for (const step of [3, 4]) {
+            previousArrival.active = previousArrival.checkpoint = { ...checkpoint, index: 0, step };
+            SN.loadCampaign(copy(previousArrival)); SN.retryCheckpoint();
+            assert(SN.campaign.active.step === step && SN.canControl(), "旧首章检查点无法继续");
+            assert(SN.activeObjective().type === (step === 3 ? "collect" : "drive"), "旧首章检查点目标映射错误");
+            if (step === 4) assert(SN.loanCar.active && SN.loanCar.type === 3, "返程检查点未提供出租车");
+          }
           expected.active = expected.checkpoint = null; expected.loadoutLost = true;
           expected.weapons = SN.weapons.map((w, i) => i === 0); expected.progression.home = "__proto__";
           SN.loadCampaign(expected);

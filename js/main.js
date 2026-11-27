@@ -1260,9 +1260,12 @@
       assert(checked > 60000, "路面采样不足：" + checked);
       assert(worstUp < 0.45, "路面突然凸起，车会被弹飞：" + worstAt);
       const underBridge = SN.surfaceHeight(-165.2, -199.4, 1.2);
-      const underStair = SN.surfaceHeight(-41.7, -278.3, 79.8);
+      const mountainRoad = SN.roadSample(-41.7, -278.3);
+      assert(mountainRoad && mountainRoad.profile.name === "남산순환로", "南山下层车道缺失");
+      const roadFloor = mountainRoad.height + 0.17;
+      const underStair = SN.surfaceHeight(-41.7, -278.3, roadFloor);
       assert(underBridge < 2.5, "高架桥下的路面被桥面顶起：" + underBridge.toFixed(2));
-      assert(underStair < 81, "南山步道盖住了下方车道：" + underStair.toFixed(2));
+      assert(Math.abs(underStair - roadFloor) < 0.45, "南山步道盖住了下方车道：" + underStair.toFixed(2));
       console.log("SMOKE road-surface: samples=" + checked + " worstUp=" + worstUp.toFixed(3) + "m at " + worstAt);
     }]);
     SN.smoke.stages.push([20.3, "lawns-dressed", () => {
@@ -1638,7 +1641,7 @@
             "车辆模型未挂接：" + car.type + "/" + car.modelKey + "/" + (car.modelRoot && car.modelRoot.parent ? car.modelRoot.parent.name || car.modelRoot.parent.type : "null") + "/" + (car.body ? car.body.name || car.body.type : "nobody"));
           check(car.modelPaint && car.modelGlass.length >= glassNeeded && car.modelWheels.length >= 3, "车辆材质、玻璃或车轮缺失");
         }
-        const taxi = SN.cars.find(car => car.type === 3 && car.modelKey === "taxi");
+        const taxi = SN.cars.find(car => car.type === 3 && car.modelKey === "taxi" && car.paintColor === 0xff7a16);
         check(taxi && taxi.modelPaint.color.getHex() === SN.srgb(0xff7a16).getHex(), "出租车不是橙色");
         check(M.carPrototypes.pickup && M.carPrototypes.police && M.carPrototypes.taxi, "缺少出租车、警车或皮卡原型");
         check(modeled.every(car => car.modelWheels.every(wheel => wheel.spin && wheel.pivot)), "车轮转向节点不完整");
@@ -2529,6 +2532,10 @@
         check(a.status === "running" && a.step === step && SN.heat === 0 && !SN.carjack && !SN.encounterActors.length, "失败重试未清理状态");
       }
       if (o.type === "go") { leave(); SN.smokeWalkTo(o, tick, Math.min(1.5, o.r * 0.6)); }
+      else if (o.type === "collect") {
+        leave(); SN.smokeWalkTo(o, tick, Math.min(1.5, o.r * 0.6));
+        SN.interactPulse = true; tick(1 / 30);
+      }
       else if (o.type === "vehicle") enter(a.contractCar);
       else if (o.type === "drive") {
         if (!SN.player.car) enter(SN.loanCar);
@@ -2689,6 +2696,15 @@
           SN.loadCampaign(copy(legacy)); assert(SN.campaign.active.step === 5 && SN.campaign.checkpoint.step === 5, "旧取证检查点迁移失败");
           legacy.active.step = SN.storyMissions[3].objectives.length - 1;
           SN.loadCampaign(copy(legacy)); assert(!SN.campaign.active && !SN.campaign.checkpoint, "迁移后越界检查点未清理");
+          const previousArrival = copy(expected);
+          previousArrival.schema = 5; previousArrival.progress = 0;
+          for (const step of [3, 4]) {
+            previousArrival.active = previousArrival.checkpoint = { ...checkpoint, index: 0, step };
+            SN.loadCampaign(copy(previousArrival)); SN.retryCheckpoint();
+            assert(SN.campaign.active.step === step && SN.canControl(), "旧首章检查点无法继续");
+            assert(SN.activeObjective().type === (step === 3 ? "collect" : "drive"), "旧首章检查点目标映射错误");
+            if (step === 4) assert(SN.loanCar.active && SN.loanCar.type === 3, "返程检查点未提供出租车");
+          }
           expected.active = expected.checkpoint = null; expected.loadoutLost = true;
           expected.weapons = SN.weapons.map((w, i) => i === 0); expected.progression.home = "__proto__";
           SN.loadCampaign(expected);

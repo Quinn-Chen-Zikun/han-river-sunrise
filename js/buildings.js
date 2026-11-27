@@ -1255,6 +1255,25 @@
     SN.urbanBlockGeo = new SN.T.ExtrudeGeometry(SN.bevelShape, { depth: 1, bevelEnabled: false, steps: 1, curveSegments: 1 });
     SN.urbanBlockGeo.rotateX(-SN.PI / 2);
     SN.urbanBlockGeo.translate(0, -0.5, 0);
+    // District street-wall bands: [min floors, max floors, tower chance, reserve chance].
+    // The reserve leaves a small deterministic gap every few lots, so the core
+    // reads as separate shopfronts instead of one continuous high wall.
+    const wallBands = {
+      jongno: [4, 8, 0, 0.09],
+      bukchon: [2, 4, 0, 0.14],
+      myeong: [3, 6, 0, 0.07],
+      station: [3, 7, 0.05, 0.09],
+      namsan: [2, 4, 0, 0.16],
+      itaewon: [2, 5, 0.05, 0.10],
+      hongdae: [3, 6, 0.08, 0.08],
+      yeouido: [4, 8, 0.22, 0.16],
+      gangnam: [4, 9, 0.28, 0.14],
+      samseong: [5, 11, 0.30, 0.16],
+      jamsil: [4, 9, 0.24, 0.18],
+      seongsu: [3, 7, 0.06, 0.12],
+      gimpo: [2, 4, 0, 0.10],
+      default: [3, 7, 0.05, 0.10]
+    };
     // Roads, bends and rear lanes establish blocks; frontage widths establish lots.
     // Large lots belong to occasional towers, while their neighbours stay smaller.
     for (let roadIndex = 0; roadIndex < SN.roads.length; roadIndex++) {
@@ -1278,23 +1297,30 @@
             const lotSeed = (Math.imul(Math.round(a[0]) + 4300, 73856093) ^ Math.imul(Math.round(a[1]) + 4700, 19349663) ^ Math.imul(lotIndex + 1, 83492791) ^ (side > 0 ? 19471 : 59183)) >>> 0,
               random = SN.lotRng(lotSeed),
               district = SN.cityDistrictAt(a[0] + tx * along, a[1] + tz * along).id,
-              business = ["gangnam", "samseong", "jamsil", "yeouido"].includes(district),
+              wall = wallBands[district] || wallBands.default,
               shopping = district === "myeong",
-              tower = business && road.width >= 20 && lotIndex % 3 !== 1;
+              tower = road.width >= 20 && wall[2] > 0 && random() < wall[2],
+              reserve = !tower && random() < wall[3];
             let era = tower ? "tower" : random() < 0.56 ? "brick" : "office";
             if (era === lastEra && era !== "tower")
               era = era === "brick" ? "office" : "brick";
-            lastEra = era;
-            const w = tower ? 25 + random() * 17 : shopping ? 8.5 + random() * 7.5 : 10 + random() * 13,
-              d = tower ? 25 + random() * 16 : 14 + random() * 11,
+            const floors = wall[0] + Math.floor(random() * (wall[1] - wall[0] + 1)),
+              w = tower ? 22 + random() * 11 : shopping ? 8.5 + random() * 7.5 : 10 + random() * 13,
+              d = tower ? 22 + random() * 11 : 14 + random() * 11,
               gap = lotIndex % 5 === 3 ? 5.5 + random() * 3 : 1.8 + random() * 1.7,
-              setback = 0.12 + random() * 0.18,
+              setback = 0.35 + random() * 0.55,
               off = road.width / 2 + (road.sidewalkW || 3.5) + 0.4 + setback + d / 2,
               center = along + w / 2,
               cx = a[0] + tx * center + nx * off * side,
               cz = a[1] + tz * center + nz * off * side,
               yaw = Math.atan2(-nx * side, -nz * side),
-              h = tower ? 70 + Math.floor(random() * 32) * 3.6 : era === "brick" ? 6.6 + Math.floor(random() * 3) * 3.1 : 13.4 + Math.floor(random() * (shopping ? 4 : 8)) * 3.2;
+              h = tower ? 48 + Math.floor(random() * 6) * 7 : 3.15 * floors + random() * 0.9;
+            if (reserve) {
+              along += w + gap + 5;
+              lotIndex++;
+              continue;
+            }
+            lastEra = era;
             if (center + w / 2 < len - 16) {
               const lot = SN.addBuilding(cx, cz, w, d, h, tower, yaw, lotSeed, era);
               if (lot) {

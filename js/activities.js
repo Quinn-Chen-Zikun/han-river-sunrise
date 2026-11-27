@@ -188,7 +188,7 @@
         SN.failMission(o.escortCar ? "证人护送中断" : "委托车辆受损或被遗弃"); return false;
       }
       return !!car && SN.player.car === car && (o.vehicleType === undefined || car.type === o.vehicleType) &&
-        distance < (o.r || 12) && Math.abs(car.speed) < 6;
+        distance < (o.r || 12) && Math.abs(car.speed) < (o.maxSpeed === undefined ? 6 : o.maxSpeed);
     }
     if (o.type === "escort") {
       const e = SN.escortActor, d = Math.hypot(e.x - SN.player.x, e.z - SN.player.z);
@@ -741,14 +741,25 @@
         assert(!SN.arrestState && !SN.$("arrestScreen").classList.contains("visible") && SN.canControl(), "被捕后无法立即重试");
         const cash = SN.money, respect = SN.progression.respect;
         for (let i = 0; i < 6; i++) {
-          const a = SN.campaign.active, o = SN.activeObjective(); assert(a && a.step === i, "教学目标顺序错误");
+          const a = SN.campaign.active, o = SN.activeObjective(); assert(a && a.step === i, "教学目标顺序错误：预期 " + i + "，当前 " + (a && a.step) + "，目标 " + (o && o.type));
           if (o.type === "vehicle") SN.player.car = a.contractCar;
+          else if (o.type === "drive") {
+            SN.player.car = a.contractCar || SN.loanCar;
+            move(o.x, o.z); SN.player.car.speed = 2.5;
+            SN.updateMission(0.1); assert(a.step === i, "送单车辆未停稳就推进目标");
+            SN.player.car.speed = SN.player.car.vx = SN.player.car.vz = 0;
+          }
+          else if (o.type === "collect") {
+            move(o.x, o.z); SN.interactPulse = true;
+            SN.updateMission(0.1); assert(a.step === i, "坐在车里即可签收回执");
+            SN.player.car = null; SN.interactPulse = true;
+          }
           else if (o.type === "fight") { SN.player.car = null; move(o.x, o.z); SN.encounterActors.forEach(e => { e.health = 0; }); }
           else if (o.type === "escape") { SN.heat = 0; SN.clearWantedResponse(); }
           else move(o.x, o.z);
           SN.updateMission(0.1);
         }
-        assert(!SN.campaign.active && SN.campaign.progress === 1 && SN.money === cash + 650 && SN.progression.respect > respect, "教学结算或后续解锁失败");
+        assert(!SN.campaign.active && SN.campaign.progress === 1 && SN.money === cash + SN.storyMissions[0].reward && SN.progression.respect > respect, "教学结算或后续解锁失败");
         reset(); SN.campaign.progress = 0;
       }],
       [11.4, "contract-vehicle-retry", () => {

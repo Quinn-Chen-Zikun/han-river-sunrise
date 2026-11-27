@@ -3,7 +3,7 @@
 (function (SN) {
   SN.registerInit(25.5, function initializeStoryContent() {
     const go = (text, x, z, extra = {}) => Object.assign({ type: "go", text, x, z, r: 7 }, extra);
-    const collect = (text, x, z) => ({ type: "collect", text: text + " · E 收取", x, z, r: 3 });
+    const collect = (text, x, z, extra = {}) => Object.assign({ type: "collect", text: text + " · E 收取", x, z, r: 3 }, extra);
     const fight = (text, x, z, count, melee = false) => ({ type: "fight", text, x, z, count, melee });
     const drive = (text, x, z, extra = {}) => Object.assign({ type: "drive", text, x, z, r: 12 }, extra);
     const escape = heat => ({ type: "escape", text: "离开搜索圈，摆脱 " + heat + "★ 通缉", heat, seconds: 180 });
@@ -18,8 +18,11 @@
       outro: "证据已交接。下一位联系人已在地图标记。"
     }, extra);
     const first = SN.storyMissions[0];
-    first.brief = "韩序温请初到首尔的你送一份货单。先学会走街、开车与自保，再决定替谁跑下一趟。";
-    first.dialogue = ["韩序温：首尔不会替新人留位置。先把送货单对清楚，别急着站队。", "韩序温：记下人说的话，也留下纸上的证据。两者未必一样。"];
+    first.brief = "韩序温把第一单交给你：去钟路便利店取货单，开出租车送到明洞咖啡店，签回执，再把车停回钟路。准时、完好、别惹事。";
+    first.dialogue = ["韩序温：第一单不远。取件、送到、签回执，再把车停回原位。", "韩序温：首尔的路会自己教你规矩。今天先别跟任何人较劲。"];
+    first.outro = "第一单结清：¥350。回执上却出现了两种金额，韩序温请你去明洞核对。";
+    first.reward = 350;
+    first.respect = 18;
     first.totalLimit = 360;
     SN.storyMissions[1].totalLimit = 480;
     SN.storyMissions[2].totalLimit = 600;
@@ -29,16 +32,16 @@
       if (o.type === "go" && !o.contact) { o.x = 578; o.z = -444; }
       if (o.type === "tail") { o.x = 620; o.z = -430; o.route = [[760, -430], [760, -640], [560, -640], [560, -430]]; }
     }
+    // First delivery loop: pickup → taxi → drop-off → receipt → return the car → hand in.
+    // The six checkpoint slots and every authored coordinate stay unchanged.
     first.objectives = [
-      go("走到便利店门口", -39, -778, { r: 3, hint: "WASD / 左摇杆移动 · Shift / 疾跑加速" }),
+      go("走到便利店门口取货单", -39, -778, { r: 3, hint: "WASD / 左摇杆移动 · Shift / 疾跑加速 · 跟着金色指引走" }),
       vehicle("进入街边准备好的出租车", -66, -786, 3, { hint: "靠近车辆按 F / 上车按钮" }),
-      drive("驾车把送货单送到咖啡店街口", 34, -637, { hint: "W 加速 · S 刹车倒车 · 空格 / 手刹转弯" }),
-      fight("下车击退两名堵路打手", 34, -609, 2, true),
-      escape(1),
-      go("回钟路将单据交给韩序温", -30, -765, { contact: "mentor", r: 3 })
+      drive("驾驶出租车送到咖啡店街口并停稳", 34, -637, { vehicleType: 3, maxSpeed: 1, hint: "W 加速 · S 刹车倒车 · 空格 / 手刹转弯 · 跟着金色路线" }),
+      collect("在咖啡店门口签收回执", 34, -609, { hint: "F 下车 · 步行到咖啡店门口按 E 签收回执" }),
+      drive("驾驶出租车把回执带回钟路并停稳", -66, -786, { vehicleType: 3, maxSpeed: 1, hint: "重新上车，沿金色路线开回钟路停车点停稳" }),
+      go("下车把回执交给韩序温", -30, -765, { contact: "mentor", r: 3, hint: "下车后走到金色 H 圆环交付回执" })
     ];
-    first.objectives[3].hint = "F 下车 · 左键 / 攻击挥拳 · H / 收枪恢复徒手";
-    first.objectives[4].hint = "驶离红圈并躲开巡警视线 · 星星闪烁后逐渐消失";
     // Preserve the first campaign and its checkpoint indices for existing saves.
     SN.storyMissions[1].giver = "detective";
     SN.storyMissions[2].giver = "informant";

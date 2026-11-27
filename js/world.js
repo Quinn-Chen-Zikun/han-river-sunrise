@@ -139,6 +139,45 @@
     return SN.tileNoise(x, z, 4096, 731) * 0.58 + SN.tileNoise(x * 2.07 + 13, z * 2.07 - 9, 4096, 883) * 0.28 + SN.tileNoise(x * 4.13 - 7, z * 4.13 + 17, 4096, 997) * 0.14;
   };
 
+  // District amplitude table. The old city floor and both built-up river banks
+  // are urban plain: hill height is multiplied down to zero there so terrain,
+  // road profiles, foundations and pedestrians all share one flat surface.
+  // Only Namsan and the surrounding mountain backdrop keep their full relief.
+  SN.terrainPlainZones = [
+    [0, -800, 820, 350],       // 종로 · 광화문
+    [500, -1360, 360, 380],    // 북촌
+    [340, -470, 540, 300],     // 명동 · 남대문
+    [-1230, -620, 360, 310],   // 서울역
+    [-1050, -190, 400, 230],   // 이태원 · 용산
+    [-1900, -730, 650, 630],   // 홍대 · 신촌
+    [-1050, 450, 690, 235],    // 여의도
+    [300, 1430, 1000, 600],    // 강남
+    [1600, 1410, 550, 540],    // 삼성
+    [2700, 1440, 700, 800],    // 잠실
+    [1760, -350, 750, 570],    // 성수
+    [-2900, -1930, 620, 1150]  // 김포
+  ];
+  SN.terrainAmplitude = function terrainAmplitude(x, z) {
+    // Namsan keeps its cone; the mask fades only where the natural hill already
+    // tapers to zero, so the summit tower and cable stations stay put.
+    const namsan = Math.hypot(x / 300, (z + 340) / 285);
+    let preserve = 1 - SN.smoothRange(1, 1.24, namsan), built = 0;
+    for (let i = 0; i < SN.terrainPlainZones.length; i++) {
+      const p = SN.terrainPlainZones[i],
+        qx = (x - p[0]) / p[2],
+        qz = (z - p[1]) / p[3],
+        q2 = qx * qx + qz * qz;
+      if (q2 >= 1.45)
+        continue;
+      const mask = 1 - SN.smoothRange(1, 1.18, Math.sqrt(q2));
+      if (mask > built)
+        built = mask;
+    }
+    // Outside the built districts the amplitude is 1, which keeps Bugaksan,
+    // Inwangsan, Naksan and the southern ridges as independent background hills.
+    return 1 - built * (1 - preserve);
+  };
+
   SN.hillHeight = function hillHeight(x, z) {
     let height = 0;
     for (let i = 0; i < SN.hillDefs.length; i++) {
@@ -160,7 +199,7 @@
     // Cut a level shopping terrace into the foot of Namsan; buildings stay upright.
     const shoppingEdge = Math.max(290 - x, x - 550, Math.abs(z + 430) - 42);
     height *= SN.smoothRange(0, 55, shoppingEdge);
-    return height;
+    return height * SN.terrainAmplitude(x, z);
   };
 
   SN.terrainSlope = function terrainSlope(x, z) {
@@ -818,8 +857,9 @@
     SN.island = { x: -1050, z: 450, rx: 690, rz: 235 };
     SN.lakePark = { x: 2720, z: 1730, rx: 150, rz: 95 };
     SN.bridges = [];
-    // Bugaksan and Inwangsan behind the palace, Namsan in the middle, hills on every edge.
-    // Smooth compact foothills, warped ridges and broad valleys; north is -Z.
+    // Bugaksan and Inwangsan behind the palace, Namsan in the middle, ridges on every edge.
+    // Keep hill order stable because each index seeds its terrain detail. The
+    // district amplitude mask flattens the urban plain around the landmarks.
     SN.hillDefs = [
       [-300, -2930, 1250, 510],
       [700, -3070, 1000, 430],
