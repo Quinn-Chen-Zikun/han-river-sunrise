@@ -192,26 +192,23 @@
       ctx.fillRect(rnd() * size, rnd() * size, 1, 1);
     }
     if (style === "denim" || style === "work" || style === "cargo") {
-      for (let x = -60; x < 300; x += 14) line(x, 0, x + 64, 256, 1, "#ffffff", 0.12);
-      rect(0, 0, 256, 16, dark, 0.55);
-      line(0, 17, 256, 17, 1, light, 0.35);
-      line(9, 0, 9, 256, 2, dark, 0.75);
-      line(247, 0, 247, 256, 2, dark, 0.75);
-      dashed(13, 16, 13, 250, 2, accent, 0.4);
-      dashed(243, 16, 243, 250, 2, accent, 0.4);
-      line(44, 48, 70, 82, 2, accent, 0.45);
-      line(212, 48, 186, 82, 2, accent, 0.45);
-      line(44, 48, 96, 48, 1, dark, 0.5);
-      line(212, 48, 160, 48, 1, dark, 0.5);
-      rect(42, 46, 3, 3, light, 0.8);
-      rect(211, 46, 3, 3, light, 0.8);
+      // Fine twill belongs to the cloth; bright dashed marks read as road paint.
+      for (let x = -64; x < 300; x += 3) line(x, 0, x + 40, 256, 0.6, light, 0.035);
+      rect(0, 0, 256, 10, dark, 0.2);
+      line(0, 11, 256, 11, 0.7, dark, 0.15);
+      line(10, 0, 10, 256, 0.7, dark, 0.12);
+      line(246, 0, 246, 256, 0.7, dark, 0.12);
+      // Hip UVs occupy the upper half of the atlas; keep pockets off the legs.
+      for (const x of [44, 170]) {
+        line(x, 26, x + 32, 26, 0.8, dark, 0.17);
+        line(x, 26, x + 6, 53, 0.8, dark, 0.15);
+        line(x + 6, 53, x + 28, 53, 0.7, dark, 0.12);
+      }
       if (style === "cargo" || style === "work") {
-        rect(30, 120, 44, 46, dark, 0.35);
-        rect(182, 120, 44, 46, dark, 0.35);
-        line(30, 120, 74, 120, 1, light, 0.3);
-        line(182, 120, 226, 120, 1, light, 0.3);
-        line(52, 120, 52, 166, 1, light, 0.2);
-        line(204, 120, 204, 166, 1, light, 0.2);
+        rect(34, 63, 37, 30, dark, 0.08);
+        rect(184, 63, 37, 30, dark, 0.08);
+        line(34, 63, 71, 63, 0.8, dark, 0.16);
+        line(184, 63, 221, 63, 0.8, dark, 0.16);
       }
     } else if (style === "suit" || style === "school") {
       for (let x = 4; x < 256; x += 22) line(x, 0, x, 256, 1, light, 0.16);
@@ -287,18 +284,13 @@
         rect(0, 246, 256, 10, dark, 0.4);
       }
     } else if (style === "tee" || style === "sport") {
-      ctx.fillStyle = accent; ctx.globalAlpha = 0.92;
-      ctx.beginPath(); ctx.arc(128, 132, 30, 0, SN.TAU); ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = "#12181d";
-      ctx.font = "bold 26px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(style === "sport" ? "07" : "서울", 128, 134);
+      // A shirt print must never be repeated across shorts or around a sleeve.
+      if (part === "top") rect(0, 0, 256, 5, collar, 0.2);
       if (style === "sport") {
-        rect(0, 28, 256, 6, accent, 0.7);
-        rect(0, 38, 256, 2, light, 0.5);
+        line(8, 16, 8, 240, 1.2, dark, 0.16);
+        line(248, 16, 248, 240, 1.2, dark, 0.16);
       }
-      rect(0, 246, 256, 10, dark, 0.5);
-      rect(0, 0, 256, 6, collar, 0.5);
+      rect(0, 248, 256, 8, dark, 0.18);
     } else if (style === "apron") {
       rect(0, 0, 256, 8, collar, 0.6);
       ctx.fillStyle = "rgba(240,236,222,0.9)";
@@ -721,8 +713,8 @@
     let chest = stations.findIndex(s => s.y >= 1.28);
     if (chest < 0) chest = stations.length - 1;
     for (let i = chest - 1; i >= 0; i--) {
-      stations[i].rx = Math.max(stations[i].rx, stations[i + 1].rx);
-      stations[i].rz = Math.max(stations[i].rz, stations[i + 1].rz);
+      stations[i].rx = Math.max(stations[i].rx, stations[chest].rx * (coat ? 0.95 : 0.90));
+      stations[i].rz = Math.max(stations[i].rz, stations[chest].rz * (coat ? 0.95 : 0.90));
     }
     for (let pass = 0; pass < 2; pass++) {
       const copy = stations.map(s => ({ rx: s.rx, rz: s.rz }));
@@ -746,25 +738,26 @@
       point => torsoWeightsFor(proto, point), 0.25, 1);
     stitchGarmentRings(builder, rings[0], rim);
     const last = stations[stations.length - 1];
-    const neckR = 0.092 + pad * 0.35;
+    const neckR = 0.078 + pad * 0.12;
+    const neckZ = proto.bones.neck_01 ? proto.bones.neck_01.z : last.cz;
     let prev = rings[rings.length - 1];
     for (let d = 1; d <= 3; d++) {
       const f = d / 3;
       const y = SN.lerp(last.y, 1.55, f);
       const k = Math.cos(f * SN.PI / 2);
       const rx = neckR + (last.rx - neckR) * k, rz = neckR + (last.rz - neckR) * k;
-      const cz = SN.lerp(last.cz, -0.014, f);
+      const cz = SN.lerp(last.cz, neckZ, f);
       const r = addGarmentRing(builder, { x: 0, y, z: cz }, front, across, rz, rx, segments, (y - hemY) / (collarY - hemY) * 0.96,
         point => torsoWeightsFor(proto, point), 0.25, 1);
       stitchGarmentRings(builder, prev, r);
       prev = r;
     }
     const collarWeights = () => [[boneIdx(proto, "neck_01"), 0.55], [boneIdx(proto, "spine_03"), 0.45]];
-    const collar = addGarmentRing(builder, { x: 0, y: 1.566, z: -0.014 }, front, across, neckR * 0.92, neckR * 0.86, segments, 1, collarWeights, 0.25, 1);
+    const collar = addGarmentRing(builder, { x: 0, y: 1.566, z: neckZ }, front, across, neckR * 0.98, neckR * 0.90, segments, 1, collarWeights, 0.25, 1);
     stitchGarmentRings(builder, prev, collar);
-    const inner = addGarmentRing(builder, { x: 0, y: 1.552, z: -0.014 }, front, across, neckR * 0.7, neckR * 0.66, segments, 1, collarWeights, 0.25, 1);
+    const inner = addGarmentRing(builder, { x: 0, y: 1.552, z: neckZ }, front, across, neckR * 0.88, neckR * 0.80, segments, 1, collarWeights, 0.25, 1);
     stitchGarmentRings(builder, collar, inner);
-    const cuffs = [];
+    const cuffs = [], shoulders = [];
     if (sleeve !== "none") {
       const long = sleeve === "long";
       const sleeveSegments = low ? 8 : 12, sleeveStations = low ? 4 : 7;
@@ -774,7 +767,7 @@
         const hand = proto.bones[side > 0 ? "hand_l" : "hand_r"];
         if (!upper || !lower || !hand) continue;
         const armSegments = armWeightSegments(proto, side);
-        const x0 = 0.155;
+        const x0 = Math.min(0.145, Math.max(0.10, profileAt(proto.torsoProfile, upper.y).rx - 0.07));
         const x1 = long ? Math.abs(hand.x) + 0.004 : SN.lerp(Math.abs(upper.x), Math.abs(lower.x), 0.6) + 0.006;
         // Long sleeves end on the measured wrist-skin centre, not on the bone:
         // the skin sits a few millimetres off the joint, and a ring on the bone
@@ -803,9 +796,21 @@
             ? SN.lerp(0.082, endRadius, Math.pow(f, 0.72))
             : SN.lerp(0.09, endRadius, Math.pow(f, 0.55));
           ringList.push(addGarmentRing(builder, { x, y, z }, up, normal, radius, radius, sleeveSegments, f,
-            point => sleeveWeightsFor(proto, point, side, armSegments), 0, 0.28));
+            point => {
+              // Root vertices share the torso motion before blending into the arm.
+              const blend = SN.smoothRange(0, 0.25, f);
+              const body = torsoWeightsFor(proto, point).map(w => [w[0], w[1] * (1 - blend)]);
+              const arm = sleeveWeightsFor(proto, point, side, armSegments).map(w => [w[0], w[1] * blend]);
+              return body.concat(arm);
+            }, 0, 0.28));
         }
         for (let i = 1; i < ringList.length; i++) stitchGarmentRings(builder, ringList[i - 1], ringList[i]);
+        // Close the buried sleeve root in the same draw; no open dark tube can show.
+        const root = ringList[0], rootPoint = { x: x0 * side, y: upper.y - 0.006, z: upper.z };
+        const rootCenter = addGVertex(builder, rootPoint.x, rootPoint.y, rootPoint.z, 0, 0.05,
+          torsoWeightsFor(proto, rootPoint), 0.94);
+        for (let n = 0; n < root.count - 1; n++) builder.tri.push(rootCenter, root.start + n + 1, root.start + n);
+        shoulders.push({ side, center: rootCenter, indices: Array.from({ length: root.count }, (_, n) => root.start + n) });
         const lastStation = ringList[ringList.length - 1];
         const cuffX = x1 * side - side * 0.018;
         const cuffRadius = long ? endRadius : endRadius + 0.002;
@@ -829,7 +834,7 @@
         cuffs.push({ side, indices, x: cuffX, y: cuffY, z: endZ, radius: cuffRadius, rim: rimRadius });
       }
     }
-    return finishGarment(builder, { cuffs });
+    return finishGarment(builder, { cuffs, shoulders });
   }
 
   function buildBottomGeometry(proto, variant, low) {
@@ -843,7 +848,13 @@
     for (let i = 0; i <= hipBands; i++) {
       const y = SN.lerp(crotchY, waistY, i / hipBands);
       const p = profileAt(proto.hipProfile, y);
-      stations.push({ y, rx: Math.max(0.12, p.rx + pad), rz: Math.max(0.085, p.rz + pad), cz: p.cz });
+      // Sink the lower hip into the leg tubes; the old skirt-like rim projected forward.
+      const blend = 1 - SN.smoothRange(crotchY, crotchY + 0.15, y);
+      const legDepth = (legRadiusAt(proto, crotchY) + pad * 0.85) * 0.68;
+      stations.push({ y,
+        rx: Math.max(0.12, p.rx + pad) * (1 - blend * 0.06),
+        rz: SN.lerp(Math.max(0.085, p.rz + pad), Math.max(0.055, legDepth), blend),
+        cz: SN.lerp(p.cz, -0.038, blend) });
     }
     for (let pass = 0; pass < 2; pass++) {
       const copy = stations.map(s => ({ rx: s.rx, rz: s.rz }));
@@ -2217,7 +2228,7 @@
   // Each story costume keeps its own garment cut, so pressing K changes the
   // silhouette and fabric as well as the colour.
   const costumeFabric = {
-    street: { fabricTop: "tee", fabricBottom: "denim", sleeve: "long", inflate: 0.026, topStyle: "" },
+    street: { fabricTop: "cotton", fabricBottom: "denim", sleeve: "long", inflate: 0.026, topStyle: "" },
     night: { fabricTop: "leather", fabricBottom: "denim", sleeve: "long", inflate: 0.03, topStyle: "coat" },
     rain: { fabricTop: "knit", fabricBottom: "work", sleeve: "long", inflate: 0.032, topStyle: "coat" },
     ash: { fabricTop: "suit", fabricBottom: "suit", sleeve: "long", inflate: 0.028, topStyle: "" },
@@ -2232,11 +2243,11 @@
     const id = "player-" + costume;
     const outfit = ensureOutfit(id, {
       label: SN.costumeLabel ? SN.costumeLabel(costume) : "城市便装",
-      top: style.outer === undefined ? 0x137fba : style.outer,
-      bottom: style.pants === undefined ? 0x365d83 : style.pants,
-      accent: style.accent === undefined ? 0xffd259 : style.accent,
-      collar: style.inner === undefined ? 0xffd259 : style.inner,
-      shoe: style.shoe === undefined ? 0x2f3a44 : style.shoe,
+      top: style.outer === undefined ? 0x4a555d : style.outer,
+      bottom: style.pants === undefined ? 0x30383f : style.pants,
+      accent: style.accent === undefined ? 0xa7aaa3 : style.accent,
+      collar: style.inner === undefined ? 0xd6d2c7 : style.inner,
+      shoe: style.shoe === undefined ? 0x363c40 : style.shoe,
       belt: style.shoe === undefined ? 0x23292f : style.shoe,
       sleeve: cut.sleeve,
       cap: helmet,

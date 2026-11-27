@@ -2,7 +2,7 @@
 "use strict";
 (function (SN) {
   SN.costumeStyles = {
-    street: { outer: 0x137fba, inner: 0xffd259, pants: 0x365d83, accent: 0xffd259, shoe: 0x2f3a44, extras: [] },
+    street: { outer: 0x4a555d, inner: 0xd6d2c7, pants: 0x30383f, accent: 0xa7aaa3, shoe: 0x363c40, extras: [] },
     night: { outer: 0x284b70, inner: 0x1d3049, pants: 0x23354d, accent: 0x56dbed, shoe: 0x23354d, extras: ["armor", "helmet", "coat"] },
     rain: { outer: 0x2b9ac4, inner: 0xf7d764, pants: 0x33495c, accent: 0xffd75e, shoe: 0xefd35b, extras: ["hood", "coat"] },
     ash: { outer: 0xe0e5dd, inner: 0x485764, pants: 0x586677, accent: 0xe68168, shoe: 0x384451, extras: ["armor"] },

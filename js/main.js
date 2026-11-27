@@ -2063,6 +2063,57 @@
           M.refreshAssignments(true);
         }
       }],
+      [23.07, "m21-clothing-shoulders", () => {
+        if (!readyToTest()) { skip("m21-clothing-shoulders"); return; }
+        const M = SN.models, probe = garmentSkin;
+        let worst = 0, samples = 0;
+        for (const sex of ["male", "female"]) for (const outfit of ["jogger", "office", "elder"]) {
+          const agent = M.spawnPerson({ sex, outfit, visible: false });
+          check(agent && agent.garments && agent.garments.top, "肩部检查人物未就绪 " + sex);
+          try {
+            const top = agent.garments.top, geo = top.geometry, roots = geo.userData.shoulders;
+            check(roots && roots.length === 2, "袖根检查点缺失 " + sex);
+            check(probe.weightsOk(top) === 0, "肩部蒙皮权重无效 " + sex);
+            // Every sleeve-root edge must have an outer face and a closing face.
+            const edges = new Map(), tri = geo.index.array;
+            for (let i = 0; i < tri.length; i += 3) {
+              for (let k = 0; k < 3; k++) {
+                const a = tri[i + k], b = tri[i + (k + 1) % 3];
+                const key = Math.min(a, b) + ":" + Math.max(a, b);
+                edges.set(key, (edges.get(key) || 0) + 1);
+              }
+            }
+            for (const root of roots) {
+              for (let i = 1; i < root.indices.length; i++) {
+                const a = root.indices[i - 1], b = root.indices[i];
+                check(edges.get(Math.min(a, b) + ":" + Math.max(a, b)) === 2, "袖根仍有开放边 " + sex);
+              }
+            }
+            for (const clip of ["Idle_Loop", "Walk_Loop", "Pistol_Aim_Neutral", "Driving_Loop"]) {
+              check(M.clips[clip], "肩部检查缺少动画 " + clip);
+              agent.play(clip); agent.mixer.update(1); agent.root.updateMatrixWorld(true);
+              for (const root of roots) {
+                const shoulder = probe.boneAt(agent, root.side > 0 ? "upperarm_l" : "upperarm_r");
+                check(shoulder, "肩关节缺失 " + sex);
+                const point = probe.skinned(top, geo, root.center), distance = point.distanceTo(shoulder);
+                check(Number.isFinite(distance) && distance <= 0.23, "袖根脱离肩部 " + sex + "/" + clip + ":" + distance.toFixed(3));
+                worst = Math.max(worst, distance); samples++;
+              }
+            }
+            if (outfit === "jogger") {
+              const canvas = agent.garments.bottom.material.map.image;
+              const pixels = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
+              let bright = 0;
+              for (let i = 0; i < pixels.length; i += 4) if (Math.max(pixels[i], pixels[i + 1], pixels[i + 2]) > 120) bright++;
+              check(bright / (canvas.width * canvas.height) < 0.01, "运动裤仍有大块高亮图案 " + sex);
+            }
+          } finally {
+            if (agent && agent.root.parent) agent.root.parent.remove(agent.root);
+            if (agent && agent.mixer) agent.mixer.stopAllAction();
+          }
+        }
+        console.log("SMOKE m21 clothing: shoulderSamples=" + samples + " rootMax=" + worst.toFixed(3) + "m");
+      }],
       [23.08, "m20-foot-plant", () => {
         if (!SN.models || !SN.models.runtimeReady || !SN.models.playerAgent) {
           console.log("SMOKE stage m20-foot-plant skipped: model assets need http(s)");
