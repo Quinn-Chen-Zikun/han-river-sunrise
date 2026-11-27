@@ -203,10 +203,10 @@
     const variant = glass ? 3 : era === "brick" ? 1 : era === "shop" || SN.inMyeong(cx, cz) ? 2 : Math.floor(random() * 3),
       setback = glass && h > 64,
       lowerH = setback ? h * 0.68 : h,
-      tint = (glass ? [0x96c8ef, 0x74bacd, 0xb5dce9, 0x829ee0, 0xc0d9ed] :
-        cz > 800 ? [0xf8e5c1, 0xc4e1ed, 0xefcba4, 0xc5cfef, 0xe5e9db] :
-        cx < -1200 ? [0xffc797, 0xff9c7d, 0xf2d179, 0x88d6cb, 0xf6dfb4] :
-        [0xffe4bf, 0xd0e5e4, 0xf3c291, 0xf6e6b8, 0xe9ada0])[Math.floor(random() * 5)],
+      tint = (glass ? [0xb9c3c5, 0xa9b9ba, 0xc8cdca, 0xb0bbc1, 0xcbd0ce] :
+        cz > 800 ? [0xd9d5ca, 0xc6cecc, 0xccc1b1, 0xbfc6c9, 0xd2d3c7] :
+        cx < -1200 ? [0xcbb9a4, 0xbda497, 0xc8bea2, 0xa6b6ad, 0xd5cbb7] :
+        [0xd7cdbd, 0xc5ceca, 0xc7b6a4, 0xd1cbbb, 0xc4b4aa])[Math.floor(random() * 5)],
       b = { ...candidate, h, base, era, seed: lotSeed, variant, lowerH, setback, upperW: w * 0.73, upperD: d * 0.76 };
     b.foundationBase = ground.low;
     b.foundationFloor = base;
@@ -412,7 +412,7 @@
             SN.facadePart(metal, b, f, u, y + dy, 1.12, 2.9, 0.065, 0.065);
           for (let rail = -1.35; rail < 1.5; rail += 0.45)
             SN.facadePart(metal, b, f, u + rail, y - 0.22, 1.12, 0.055, 0.88, 0.055);
-          SN.facadePart(fabric, b, f, u + 0.45, y, 1.14, 0.75, 0.8, 0.04, [0xf6cc73, 0xea8b79, 0x7bd7ce][b.seed % 3]);
+          SN.facadePart(fabric, b, f, u + 0.45, y, 1.14, 0.75, 0.8, 0.04, [0xc0ae83, 0xb18d7e, 0x8eaaa2][b.seed % 3]);
         }
         SN.facadePart(metal, b, f, -b.w / 2 + 0.35, b.h / 2, 0.28, 0.09, b.h, 0.09);
       }
@@ -1078,8 +1078,8 @@
         emissiveMap: maps.emissiveMap,
         emissiveIntensity: 0,
         roughness: 1,
-        metalness: 0.4,
-        envMapIntensity: 1.1
+        metalness: 0.30,
+        envMapIntensity: 0.85
       });
       material.normalScale.set(0.4, 0.4);
       SN.applyWorldUV(material, 1 / 12.8, 1 / 25.6, SN.facadeHook);
@@ -1088,9 +1088,9 @@
         compileGlass(shader);
         shader.fragmentShader = shader.fragmentShader.replace("#include <map_fragment>", `#include <map_fragment>
           float skyBand = smoothstep(3.,140.,vPbrWorld.y);
-          vec3 reflectionTone = mix(vec3(.50,.69,.80),vec3(.94,1.13,1.24),skyBand);
+          vec3 reflectionTone = mix(vec3(.84,.89,.92),vec3(1.04,1.06,1.08),skyBand);
           diffuseColor.rgb *= reflectionTone;
-          diffuseColor.rgb += vec3(.025,.045,.065)*skyBand;`);
+          diffuseColor.rgb += vec3(.008,.012,.014)*skyBand;`);
       };
       SN.buildingMats.push(material);
     }
@@ -1428,7 +1428,7 @@
           if (SN.crossings.some(c => Math.hypot(c[0] - x, c[1] - z) < 28)) continue;
           for (const side of [-1, 1]) {
             const off = side * (road.width / 2 - 1.95), px = x + nx * off, pz = z + nz * off;
-            SN.record(busPaint, px, SN.roadHeight(px, pz) + 0.18, pz, 2.9, 0.008, 8.05, yaw, 0xd84032);
+            SN.record(busPaint, px, SN.roadHeight(px, pz) + 0.18, pz, 2.9, 0.008, 8.05, yaw, 0xa44f43);
             busPaint[busPaint.length - 1].pitch = -Math.atan2(SN.roadHeight(px + dx / len * 4, pz + dz / len * 4) - SN.roadHeight(px - dx / len * 4, pz - dz / len * 4), 8);
           }
         }
@@ -1452,7 +1452,7 @@
     SN.shopSigns = [[], [], [], [], [], [], [], []];
     SN.shopFronts = [];
     SN.shopNames = ["소리치는 치킨", "옥이 반찬", "달빛 노래방", "별밤 PC방", "명동 향수", "광장 약초", "종로 골동", "순희네 손칼국수"];
-    SN.shopColors = ["#8ff1ce", "#ffc88d", "#c1d2ff", "#ff9bd2", "#a5ffcf", "#ffe28f", "#9bd6ff", "#ffb38a"];
+    SN.shopColors = ["#8fa79b", "#b89c7c", "#969fad", "#b48f9f", "#99ad9e", "#c1ae83", "#8ba0ad", "#ba9984"];
     SN.shopColorHex = SN.shopColors.map(c => parseInt(c.slice(1), 16));
     // Choose visible street frontage by the nearest road; corner lots get two fronts.
     for (const batch of SN.buildingBatches)

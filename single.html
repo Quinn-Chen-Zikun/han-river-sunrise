@@ -3331,7 +3331,7 @@ window.SN = {};
     }
     if (SN.postBloomPass) {
       SN.postBloomPass.enabled = SN.postActive;
-      SN.postBloomPass.strength = level >= 2 ? 0.2 : 0.12;
+      SN.postBloomPass.strength = level >= 2 ? 0.13 : 0.08;
       SN.postBloomPass.threshold = level >= 2 ? 0.88 : 0.93;
     }
     if (SN.postGradePass)
@@ -3537,11 +3537,11 @@ window.SN = {};
     // Distance haze uses the same horizon colour as the sky.
     SN.scene.fog.color.copy(SN.skyUniforms.horizon.value).convertSRGBToLinear();
     SN.hemi.intensity = 0.44 + day * 0.24 + sunset * 0.065;
-    SN.hemi.color.setRGB(SN.lerp(0.32, 0.48, day), SN.lerp(0.44, 0.7, day), SN.lerp(0.72, 1, day));
+    SN.hemi.color.setRGB(SN.lerp(0.40, 0.66, day), SN.lerp(0.44, 0.68, day), SN.lerp(0.53, 0.71, day));
     SN.hemi.groundColor.setRGB(SN.lerp(0.055, 0.28, day) + sunset * 0.045, SN.lerp(0.06, 0.255, day) + sunset * 0.025, SN.lerp(0.07, 0.215, day));
     SN.sun.color.copy(SN.daySun).lerp(SN.warmSun, sunset);
     SN.sun.intensity = day * (0.25 + 1.55 * Math.sqrt(Math.max(0, elevation))) + sunset * 0.22;
-    SN.renderer.toneMappingExposure = 1.13 - day * 0.13 + sunset * 0.045;
+    SN.renderer.toneMappingExposure = 1.10 - day * 0.10 + sunset * 0.045;
     const px = SN.started ? SN.playerRender.x : SN.camera.position.x,
       pz = SN.started ? SN.playerRender.z : SN.camera.position.z,
       py = SN.started ? SN.playerRender.y : 0;
@@ -3576,8 +3576,8 @@ window.SN = {};
     SN.headMat.emissiveIntensity = 0.35 + SN.night * 2.4;
     SN.tailMat.emissiveIntensity = 0.12 + SN.night * 1.6;
     for (let i = 0; i < SN.neonMats.length; i++)
-      SN.neonMats[i].emissiveIntensity = 0.22 + SN.night * 1.6;
-    if (SN.neonTubeMat) SN.neonTubeMat.emissiveIntensity = 0.45 + SN.night * 2.5;
+      SN.neonMats[i].emissiveIntensity = 0.08 + SN.night * 1.4;
+    if (SN.neonTubeMat) SN.neonTubeMat.emissiveIntensity = 0.12 + SN.night * 2.1;
     SN.waterNight.value = SN.night;
     SN.waterMat.color.setRGB(SN.lerp(0.018, 0.018, SN.night), SN.lerp(0.21, 0.065, SN.night), SN.lerp(0.42, 0.16, SN.night));
     SN.skyUniforms.time.value = SN.renderTime;
@@ -3706,7 +3706,7 @@ window.SN = {};
     SN.scene = new SN.T.Scene();
     SN.headlight = new SN.T.SpotLight(0xffe6be, 0, 90, Math.PI / 5, 0.65, 1.2);
     SN.scene.add(SN.headlight, SN.headlight.target);
-    SN.scene.fog = new SN.T.Fog(0x8ac9ef, 1100, 3300);
+    SN.scene.fog = new SN.T.Fog(0xb9c5cb, 1100, 3300);
     SN.camera = new SN.T.PerspectiveCamera(65, innerWidth / innerHeight, 0.08, 3500);
     SN.hemi = new SN.T.HemisphereLight(0xc5dfef, 0x5f6854, 0.9);
     SN.scene.add(SN.hemi);
@@ -3748,8 +3748,9 @@ window.SN = {};
         uGrain: { value: 0.002 },
         uVignette: { value: 0.12 },
         uBlur: { value: 0 },
-        uContrast: { value: 0.08 },
-        uSaturation: { value: 1.12 }
+        // Let stone, brick and grey-blue glass carry the palette; keep the grade close to neutral.
+        uContrast: { value: 0.05 },
+        uSaturation: { value: 0.97 }
       },
       vertexShader: "varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
       fragmentShader: `uniform sampler2D tDiffuse;uniform float uTime,uGrain,uVignette,uBlur,uContrast,uSaturation;uniform vec2 uResolution;varying vec2 vUv;
@@ -3912,8 +3913,8 @@ void main(){
     // the shared glow sprite material is created.
     // Procedural sky and a generated reflection environment; no image assets.
     SN.skyUniforms = {
-      top: { value: new SN.T.Color(0x1673d1) },
-      horizon: { value: new SN.T.Color(0x8ac9ef) },
+      top: { value: new SN.T.Color(0x728b9e) },
+      horizon: { value: new SN.T.Color(0xb9c5cb) },
       night: { value: 0 },
       sunDir: { value: new SN.T.Vector3(-0.85, 0.2, -0.35) },
       moonDir: { value: new SN.T.Vector3(0.55, 0.42, 0.72) },
@@ -4043,13 +4044,13 @@ void main(){
   // Startup phase 49: keep this order relative to the other systems.
 
   SN.registerInit(49, function initializeRenderer49() {
-    SN.dayTop = new SN.T.Color(0x1673d1);
-    SN.sunsetTop = new SN.T.Color(0x677aaf);
-    SN.nightTop = new SN.T.Color(0x10264d);
-    SN.dayHorizon = new SN.T.Color(0x8ac9ef);
-    SN.sunsetHorizon = new SN.T.Color(0xffbd86);
-    SN.nightHorizon = new SN.T.Color(0x355681);
-    SN.warmSun = new SN.T.Color(0xffae68);
+    SN.dayTop = new SN.T.Color(0x728b9e);
+    SN.sunsetTop = new SN.T.Color(0x777d8a);
+    SN.nightTop = new SN.T.Color(0x1d293a);
+    SN.dayHorizon = new SN.T.Color(0xb9c5cb);
+    SN.sunsetHorizon = new SN.T.Color(0xd4b69b);
+    SN.nightHorizon = new SN.T.Color(0x465867);
+    SN.warmSun = new SN.T.Color(0xe4bc92);
     SN.daySun = new SN.T.Color(0xfff1d6);
     SN.hazeLinear = new SN.T.Color(0x93a6ad).convertSRGBToLinear();
     SN.fogTmp = new SN.T.Color();
@@ -5025,10 +5026,10 @@ void main(){
     const size = SN.PBR_TEX_SIZE,
       height = SN.noiseHeightCanvas(size, seed, 0.5, 0.16, 0.12),
       hctx = height.getContext("2d");
-    const color = SN.colorFromHeight(height, [84, 102, 70], 0.38, seed + 3), cctx = color.getContext("2d");
+    const color = SN.colorFromHeight(height, [88, 98, 77], 0.38, seed + 3), cctx = color.getContext("2d");
     for (let i = 0; i < 9000; i++) {
       const x = SN.texRange(0, size), y = SN.texRange(0, size), v = SN.texRange(0, 1);
-      cctx.strokeStyle = v > 0.55 ? "rgba(110,128,82,.5)" : "rgba(48,62,40,.45)";
+      cctx.strokeStyle = v > 0.55 ? "rgba(110,119,92,.5)" : "rgba(48,62,40,.45)";
       cctx.lineWidth = SN.texRange(0.6, 1.4);
       cctx.beginPath();
       cctx.moveTo(x, y);
@@ -5263,7 +5264,7 @@ void main(){
         hd[i + 3] = 255;
       }
     hctx.putImageData(himg, 0, 0);
-    const color = SN.colorFromHeight(height, glassTower ? [86, 149, 180] : [[219, 197, 151], [196, 111, 80], [156, 200, 190]][variant], 0.42, 811 + variant),
+    const color = SN.colorFromHeight(height, glassTower ? [146, 158, 161] : [[203, 194, 178], [166, 120, 99], [158, 170, 165]][variant], 0.42, 811 + variant),
       cctx = color.getContext("2d");
     const rough = SN.makeCanvas(w, h), rctx = rough.getContext("2d");
     rctx.fillStyle = glassTower ? "#6a6a6a" : "#dcdcdc";
@@ -5274,7 +5275,7 @@ void main(){
     // Masonry courses and glazed shop-house tiles are baked into the shared atlas.
     if (variant === 1 || variant === 2) {
       const tileH = variant === 1 ? 16 : 48, tileW = variant === 1 ? 48 : 64;
-      cctx.strokeStyle = variant === 1 ? "#8d6554" : "#759c98";
+      cctx.strokeStyle = variant === 1 ? "#8d6554" : "#818d87";
       cctx.lineWidth = variant === 1 ? 2 : 3;
       for (let y = 0; y < h; y += tileH) {
         cctx.beginPath(); cctx.moveTo(0, y); cctx.lineTo(w, y); cctx.stroke();
@@ -5303,7 +5304,7 @@ void main(){
         cctx.fillStyle = glass;
         cctx.fillRect(x, y, ww, wh);
         // Bright sky reflections, mullions and blinds remain readable without near geometry.
-        cctx.fillStyle = glassTower ? "#8bc3df" : "#6799b1";
+        cctx.fillStyle = glassTower ? "#a5b3b7" : "#8c9b9e";
         cctx.fillRect(x + 3, y + 3, ww - 6, wh * 0.24);
         if (v > 0.62) {
           cctx.fillStyle = v > 0.85 ? "#e2c390" : "#b6c9c9";
@@ -5311,7 +5312,7 @@ void main(){
           cctx.fillStyle = "#8a9597";
           for (let blind = 8; blind < wh * 0.4; blind += 7) cctx.fillRect(x + 3, y + blind, ww - 6, 1);
         }
-        cctx.strokeStyle = glassTower ? "#b5d5df" : "#e5d8bc";
+        cctx.strokeStyle = glassTower ? "#bcc3c2" : "#e5d8bc";
         cctx.lineWidth = 3;
         cctx.strokeRect(x, y, ww, wh);
         cctx.fillStyle = "#c8d4d3";
@@ -11752,10 +11753,10 @@ void main(){
     const variant = glass ? 3 : era === "brick" ? 1 : era === "shop" || SN.inMyeong(cx, cz) ? 2 : Math.floor(random() * 3),
       setback = glass && h > 64,
       lowerH = setback ? h * 0.68 : h,
-      tint = (glass ? [0x96c8ef, 0x74bacd, 0xb5dce9, 0x829ee0, 0xc0d9ed] :
-        cz > 800 ? [0xf8e5c1, 0xc4e1ed, 0xefcba4, 0xc5cfef, 0xe5e9db] :
-        cx < -1200 ? [0xffc797, 0xff9c7d, 0xf2d179, 0x88d6cb, 0xf6dfb4] :
-        [0xffe4bf, 0xd0e5e4, 0xf3c291, 0xf6e6b8, 0xe9ada0])[Math.floor(random() * 5)],
+      tint = (glass ? [0xb9c3c5, 0xa9b9ba, 0xc8cdca, 0xb0bbc1, 0xcbd0ce] :
+        cz > 800 ? [0xd9d5ca, 0xc6cecc, 0xccc1b1, 0xbfc6c9, 0xd2d3c7] :
+        cx < -1200 ? [0xcbb9a4, 0xbda497, 0xc8bea2, 0xa6b6ad, 0xd5cbb7] :
+        [0xd7cdbd, 0xc5ceca, 0xc7b6a4, 0xd1cbbb, 0xc4b4aa])[Math.floor(random() * 5)],
       b = { ...candidate, h, base, era, seed: lotSeed, variant, lowerH, setback, upperW: w * 0.73, upperD: d * 0.76 };
     b.foundationBase = ground.low;
     b.foundationFloor = base;
@@ -11961,7 +11962,7 @@ void main(){
             SN.facadePart(metal, b, f, u, y + dy, 1.12, 2.9, 0.065, 0.065);
           for (let rail = -1.35; rail < 1.5; rail += 0.45)
             SN.facadePart(metal, b, f, u + rail, y - 0.22, 1.12, 0.055, 0.88, 0.055);
-          SN.facadePart(fabric, b, f, u + 0.45, y, 1.14, 0.75, 0.8, 0.04, [0xf6cc73, 0xea8b79, 0x7bd7ce][b.seed % 3]);
+          SN.facadePart(fabric, b, f, u + 0.45, y, 1.14, 0.75, 0.8, 0.04, [0xc0ae83, 0xb18d7e, 0x8eaaa2][b.seed % 3]);
         }
         SN.facadePart(metal, b, f, -b.w / 2 + 0.35, b.h / 2, 0.28, 0.09, b.h, 0.09);
       }
@@ -12627,8 +12628,8 @@ void main(){
         emissiveMap: maps.emissiveMap,
         emissiveIntensity: 0,
         roughness: 1,
-        metalness: 0.4,
-        envMapIntensity: 1.1
+        metalness: 0.30,
+        envMapIntensity: 0.85
       });
       material.normalScale.set(0.4, 0.4);
       SN.applyWorldUV(material, 1 / 12.8, 1 / 25.6, SN.facadeHook);
@@ -12637,9 +12638,9 @@ void main(){
         compileGlass(shader);
         shader.fragmentShader = shader.fragmentShader.replace("#include <map_fragment>", `#include <map_fragment>
           float skyBand = smoothstep(3.,140.,vPbrWorld.y);
-          vec3 reflectionTone = mix(vec3(.50,.69,.80),vec3(.94,1.13,1.24),skyBand);
+          vec3 reflectionTone = mix(vec3(.84,.89,.92),vec3(1.04,1.06,1.08),skyBand);
           diffuseColor.rgb *= reflectionTone;
-          diffuseColor.rgb += vec3(.025,.045,.065)*skyBand;`);
+          diffuseColor.rgb += vec3(.008,.012,.014)*skyBand;`);
       };
       SN.buildingMats.push(material);
     }
@@ -12977,7 +12978,7 @@ void main(){
           if (SN.crossings.some(c => Math.hypot(c[0] - x, c[1] - z) < 28)) continue;
           for (const side of [-1, 1]) {
             const off = side * (road.width / 2 - 1.95), px = x + nx * off, pz = z + nz * off;
-            SN.record(busPaint, px, SN.roadHeight(px, pz) + 0.18, pz, 2.9, 0.008, 8.05, yaw, 0xd84032);
+            SN.record(busPaint, px, SN.roadHeight(px, pz) + 0.18, pz, 2.9, 0.008, 8.05, yaw, 0xa44f43);
             busPaint[busPaint.length - 1].pitch = -Math.atan2(SN.roadHeight(px + dx / len * 4, pz + dz / len * 4) - SN.roadHeight(px - dx / len * 4, pz - dz / len * 4), 8);
           }
         }
@@ -13001,7 +13002,7 @@ void main(){
     SN.shopSigns = [[], [], [], [], [], [], [], []];
     SN.shopFronts = [];
     SN.shopNames = ["소리치는 치킨", "옥이 반찬", "달빛 노래방", "별밤 PC방", "명동 향수", "광장 약초", "종로 골동", "순희네 손칼국수"];
-    SN.shopColors = ["#8ff1ce", "#ffc88d", "#c1d2ff", "#ff9bd2", "#a5ffcf", "#ffe28f", "#9bd6ff", "#ffb38a"];
+    SN.shopColors = ["#8fa79b", "#b89c7c", "#969fad", "#b48f9f", "#99ad9e", "#c1ae83", "#8ba0ad", "#ba9984"];
     SN.shopColorHex = SN.shopColors.map(c => parseInt(c.slice(1), 16));
     // Choose visible street frontage by the nearest road; corner lots get two fronts.
     for (const batch of SN.buildingBatches)
@@ -13481,15 +13482,15 @@ void main(){
     SN.addProp(x, z, Math.max(0.75, 0.85 * scale), Math.max(0.75, 0.85 * scale), 6.2 * scale);
     SN.record(SN.trunkBatch, x, y + 3.1 * scale, z, 0.42 * scale, 6.2 * scale, 0.42 * scale);
     if (willow) {
-      SN.record(SN.leafBatch, x, y + 7.1 * scale, z, 4.9 * scale, 2.8 * scale, 4.9 * scale, SN.rand(0, SN.TAU), 0x79a36c);
-      SN.record(SN.leafBatch, x, y + 6.1 * scale, z, 3.5 * scale, 1.7 * scale, 3.4 * scale, SN.rand(0, SN.TAU), 0x5f8a5d);
+      SN.record(SN.leafBatch, x, y + 7.1 * scale, z, 4.9 * scale, 2.8 * scale, 4.9 * scale, SN.rand(0, SN.TAU), 0x8c9a7e);
+      SN.record(SN.leafBatch, x, y + 6.1 * scale, z, 3.5 * scale, 1.7 * scale, 3.4 * scale, SN.rand(0, SN.TAU), 0x77886e);
       for (let i = 0; i < 5; i++) {
         const a = i * SN.TAU / 5;
-        SN.record(SN.willowBatch, x + Math.sin(a) * 3.6 * scale, y + 4.9 * scale, z + Math.cos(a) * 3.6 * scale, 1.25 * scale, 3.8 * scale, 1.3 * scale, a, 0x7ca476);
+        SN.record(SN.willowBatch, x + Math.sin(a) * 3.6 * scale, y + 4.9 * scale, z + Math.cos(a) * 3.6 * scale, 1.25 * scale, 3.8 * scale, 1.3 * scale, a, 0x8b9a7e);
       }
       for (let i = 0; i < 4; i++) {
         const a = i * SN.TAU / 4 + 0.4;
-        SN.record(SN.willowBatch, x + Math.sin(a) * 4.5 * scale, y + 4.4 * scale, z + Math.cos(a) * 4.5 * scale, 0.9 * scale, 3.1 * scale, 0.95 * scale, a, 0x6b956b);
+        SN.record(SN.willowBatch, x + Math.sin(a) * 4.5 * scale, y + 4.4 * scale, z + Math.cos(a) * 4.5 * scale, 0.9 * scale, 3.1 * scale, 0.95 * scale, a, 0x7d8f75);
       }
     }
     else {
@@ -13497,10 +13498,10 @@ void main(){
       // foliage instead of a single low-poly ball.
       for (let i = 0; i < 3; i++) {
         const a = i * SN.TAU / 3;
-        SN.record(SN.leafBatch, x + Math.sin(a) * 1.2 * scale, y + (6.1 + i * 0.45) * scale, z + Math.cos(a) * 1.2 * scale, 2.9 * scale, 3 * scale, 2.8 * scale, a, [0x7d9c80, 0x8aab84, 0xa3bb8e][i]);
+        SN.record(SN.leafBatch, x + Math.sin(a) * 1.2 * scale, y + (6.1 + i * 0.45) * scale, z + Math.cos(a) * 1.2 * scale, 2.9 * scale, 3 * scale, 2.8 * scale, a, [0x899480, 0x99a28b, 0xaeb49a][i]);
       }
-      SN.record(SN.leafBatch, x + SN.rand(-0.4, 0.4) * scale, y + 4.9 * scale, z + SN.rand(-0.4, 0.4) * scale, 3.6 * scale, 2.1 * scale, 3.4 * scale, SN.rand(0, SN.TAU), 0x6c8e68);
-      SN.record(SN.leafBatch, x + SN.rand(-0.5, 0.5) * scale, y + 8.35 * scale, z + SN.rand(-0.5, 0.5) * scale, 2 * scale, 1.8 * scale, 1.9 * scale, SN.rand(0, SN.TAU), 0xa2bb90);
+      SN.record(SN.leafBatch, x + SN.rand(-0.4, 0.4) * scale, y + 4.9 * scale, z + SN.rand(-0.4, 0.4) * scale, 3.6 * scale, 2.1 * scale, 3.4 * scale, SN.rand(0, SN.TAU), 0x818e75);
+      SN.record(SN.leafBatch, x + SN.rand(-0.5, 0.5) * scale, y + 8.35 * scale, z + SN.rand(-0.5, 0.5) * scale, 2 * scale, 1.8 * scale, 1.9 * scale, SN.rand(0, SN.TAU), 0xabb297);
     }
   };
 
@@ -13909,12 +13910,12 @@ void main(){
       brick: SN.pbrMat("brick", 0xffe8dc, { uvScale: 0.44, roughness: 1 }),
       cream: SN.pbrMat("stucco", 0xf2e4c8, { uvScale: 0.36, roughness: 1, metalness: 0.02 }),
       glass: SN.pbrMat("glass", 0xc2dde0, { uvScale: 0.5, metalness: 0.62, roughness: 1, envMapIntensity: 1.1 }),
-      gold: SN.pbrMat("metal", 0xffc34c, { uvScale: 0.45, metalness: 0.82, roughness: 0.42 }),
-      teal: SN.pbrMat("metal", 0x69a69c, { uvScale: 0.5, metalness: 0.45, roughness: 0.75 }),
+      gold: SN.pbrMat("metal", 0xbba36c, { uvScale: 0.45, metalness: 0.82, roughness: 0.42 }),
+      teal: SN.pbrMat("metal", 0x879c92, { uvScale: 0.5, metalness: 0.45, roughness: 0.75 }),
       dark: SN.pbrMat("metal", 0x53666c, { uvScale: 0.45, metalness: 0.4, roughness: 0.86 }),
       white: SN.pbrMat("stucco", 0xf0e8d8, { uvScale: 0.4, roughness: 1, metalness: 0.02 }),
-      red: SN.pbrMat("paint", 0xf2442f, { uvScale: 0.5, roughness: 0.92 }),
-      grass: SN.pbrMat("grass", 0xadc09a, { uvScale: 0.8, roughness: 1 }),
+      red: SN.pbrMat("paint", 0xa96050, { uvScale: 0.5, roughness: 0.92 }),
+      grass: SN.pbrMat("grass", 0xb5bca5, { uvScale: 0.8, roughness: 1 }),
       light: SN.pbrMat("paint", 0xffe9c8, { uvScale: 0.5, emissive: 0x9fe0cc, emissiveIntensity: 0.7, roughness: 0.42 })
     };
     SN.cityPalette.silver = SN.pbrMat("metal", 0xb4d5ec, { uvScale: 0.16, metalness: 0.6, roughness: 0.5, envMapIntensity: 0.7 });
@@ -13929,13 +13930,13 @@ void main(){
       SN.buildingMats[3].onBeforeCompile(shader);
       shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n vUv=uv*vec2(18.,16.);");
     };
-    SN.cityPalette.curtain.color.copy(SN.srgb(0xc2e2f1)); SN.neonMats.push(SN.cityPalette.curtain);
+    SN.cityPalette.curtain.color.copy(SN.srgb(0xc2cccd)); SN.neonMats.push(SN.cityPalette.curtain);
     SN.cityPalette.goldFacade = SN.buildingMats[3].clone();
     SN.cityPalette.goldFacade.onBeforeCompile = shader => {
       SN.buildingMats[3].onBeforeCompile(shader);
       shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n vUv=uv*vec2(4.,8.6);");
     };
-    SN.cityPalette.goldFacade.color.copy(SN.srgb(0xffd16c)); SN.neonMats.push(SN.cityPalette.goldFacade);
+    SN.cityPalette.goldFacade.color.copy(SN.srgb(0xc4b38c)); SN.neonMats.push(SN.cityPalette.goldFacade);
     const silverCompile = SN.cityPalette.silver.onBeforeCompile;
     SN.cityPalette.silver.onBeforeCompile = shader => {
       silverCompile(shader);
@@ -14158,9 +14159,9 @@ void main(){
         SN.record(SN.trunkBatch, tx, ty + 3.4, tz, 0.5, 6.8, 0.5);
         for (let i = 0; i < 3; i++) {
           const a = i * SN.TAU / 3;
-          SN.record(SN.leafBatch, tx + Math.sin(a) * 1.3, ty + 6.7 + i * 0.5, tz + Math.cos(a) * 1.3, 3.1, 3.2, 3, a, [0x7d9c80, 0x8aab84, 0xa3bb8e][i]);
+          SN.record(SN.leafBatch, tx + Math.sin(a) * 1.3, ty + 6.7 + i * 0.5, tz + Math.cos(a) * 1.3, 3.1, 3.2, 3, a, [0x899480, 0x99a28b, 0xaeb49a][i]);
         }
-        SN.record(SN.leafBatch, tx, ty + 5.4, tz, 3.9, 2.3, 3.7, SN.rand(0, SN.TAU), 0x6c8e68);
+        SN.record(SN.leafBatch, tx, ty + 5.4, tz, 3.9, 2.3, 3.7, SN.rand(0, SN.TAU), 0x818e75);
       }
       for (let i = 0; i < 9; i++)
         SN.cityPart(g, "red", -64 + i * 16, 0.65, 25, 6, 0.3, 1.5);
@@ -14531,7 +14532,7 @@ void main(){
     }
     SN.trunkMat = SN.pbrMat("wood", 0xc8a482, { uvScale: 1.1, roughness: 1, metalness: 0, envMapIntensity: 0.2 });
     SN.foliageFocus = { value: new SN.T.Vector3() };
-    SN.leafMat = SN.pbrMat("grass", 0xffffff, { uvScale: 0.4, flatShading: true, roughness: 1, metalness: 0, envMapIntensity: 0.25, emissive: 0x355d45, emissiveIntensity: 0.18 });
+    SN.leafMat = SN.pbrMat("grass", 0xffffff, { uvScale: 0.4, flatShading: true, roughness: 1, metalness: 0, envMapIntensity: 0.25, emissive: 0x5a6251, emissiveIntensity: 0.08 });
     const leafCompile = SN.leafMat.onBeforeCompile;
     SN.leafMat.customProgramCacheKey = () => "foliage-camera-corridor-v2";
     SN.leafMat.onBeforeCompile = shader => {
@@ -19331,7 +19332,7 @@ void main(){
         topSpeed: 44, accel: 18, mass: 0.34, grip: 11.5, damage: 1.7, pitch: 102, cruise: 13, bike: true, sportbike: true }
     );
     SN.vehicleGeometry = SN.vehicleSpecs.map(spec => SN.buildVehicleGeometry(spec));
-    SN.carColors = [0xd82b32, 0x1761cf, 0xffa51e, 0x242d3c, 0x16814e, 0x9daebe, 0x854bbd, 0x13a7ab, 0xf16026, 0xb82558, 0xf4ce39, 0xdbe1e5];
+    SN.carColors = [0x80504c, 0x526776, 0xc4c7c4, 0x242d3c, 0x677268, 0x9daebe, 0x716772, 0x778481, 0x9a7d62, 0x6d5358, 0xc3b99e, 0xd9dcd7];
     SN.cars = [];
     SN.carPaintSurface = SN.getSurface("carPaint");
     SN.vehicleAccentMats = [

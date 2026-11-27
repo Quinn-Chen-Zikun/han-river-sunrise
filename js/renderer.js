@@ -87,7 +87,7 @@
     }
     if (SN.postBloomPass) {
       SN.postBloomPass.enabled = SN.postActive;
-      SN.postBloomPass.strength = level >= 2 ? 0.2 : 0.12;
+      SN.postBloomPass.strength = level >= 2 ? 0.13 : 0.08;
       SN.postBloomPass.threshold = level >= 2 ? 0.88 : 0.93;
     }
     if (SN.postGradePass)
@@ -293,11 +293,11 @@
     // Distance haze uses the same horizon colour as the sky.
     SN.scene.fog.color.copy(SN.skyUniforms.horizon.value).convertSRGBToLinear();
     SN.hemi.intensity = 0.44 + day * 0.24 + sunset * 0.065;
-    SN.hemi.color.setRGB(SN.lerp(0.32, 0.48, day), SN.lerp(0.44, 0.7, day), SN.lerp(0.72, 1, day));
+    SN.hemi.color.setRGB(SN.lerp(0.40, 0.66, day), SN.lerp(0.44, 0.68, day), SN.lerp(0.53, 0.71, day));
     SN.hemi.groundColor.setRGB(SN.lerp(0.055, 0.28, day) + sunset * 0.045, SN.lerp(0.06, 0.255, day) + sunset * 0.025, SN.lerp(0.07, 0.215, day));
     SN.sun.color.copy(SN.daySun).lerp(SN.warmSun, sunset);
     SN.sun.intensity = day * (0.25 + 1.55 * Math.sqrt(Math.max(0, elevation))) + sunset * 0.22;
-    SN.renderer.toneMappingExposure = 1.13 - day * 0.13 + sunset * 0.045;
+    SN.renderer.toneMappingExposure = 1.10 - day * 0.10 + sunset * 0.045;
     const px = SN.started ? SN.playerRender.x : SN.camera.position.x,
       pz = SN.started ? SN.playerRender.z : SN.camera.position.z,
       py = SN.started ? SN.playerRender.y : 0;
@@ -332,8 +332,8 @@
     SN.headMat.emissiveIntensity = 0.35 + SN.night * 2.4;
     SN.tailMat.emissiveIntensity = 0.12 + SN.night * 1.6;
     for (let i = 0; i < SN.neonMats.length; i++)
-      SN.neonMats[i].emissiveIntensity = 0.22 + SN.night * 1.6;
-    if (SN.neonTubeMat) SN.neonTubeMat.emissiveIntensity = 0.45 + SN.night * 2.5;
+      SN.neonMats[i].emissiveIntensity = 0.08 + SN.night * 1.4;
+    if (SN.neonTubeMat) SN.neonTubeMat.emissiveIntensity = 0.12 + SN.night * 2.1;
     SN.waterNight.value = SN.night;
     SN.waterMat.color.setRGB(SN.lerp(0.018, 0.018, SN.night), SN.lerp(0.21, 0.065, SN.night), SN.lerp(0.42, 0.16, SN.night));
     SN.skyUniforms.time.value = SN.renderTime;
@@ -462,7 +462,7 @@
     SN.scene = new SN.T.Scene();
     SN.headlight = new SN.T.SpotLight(0xffe6be, 0, 90, Math.PI / 5, 0.65, 1.2);
     SN.scene.add(SN.headlight, SN.headlight.target);
-    SN.scene.fog = new SN.T.Fog(0x8ac9ef, 1100, 3300);
+    SN.scene.fog = new SN.T.Fog(0xb9c5cb, 1100, 3300);
     SN.camera = new SN.T.PerspectiveCamera(65, innerWidth / innerHeight, 0.08, 3500);
     SN.hemi = new SN.T.HemisphereLight(0xc5dfef, 0x5f6854, 0.9);
     SN.scene.add(SN.hemi);
@@ -504,8 +504,9 @@
         uGrain: { value: 0.002 },
         uVignette: { value: 0.12 },
         uBlur: { value: 0 },
-        uContrast: { value: 0.08 },
-        uSaturation: { value: 1.12 }
+        // Let stone, brick and grey-blue glass carry the palette; keep the grade close to neutral.
+        uContrast: { value: 0.05 },
+        uSaturation: { value: 0.97 }
       },
       vertexShader: "varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}",
       fragmentShader: `uniform sampler2D tDiffuse;uniform float uTime,uGrain,uVignette,uBlur,uContrast,uSaturation;uniform vec2 uResolution;varying vec2 vUv;
@@ -668,8 +669,8 @@ void main(){
     // the shared glow sprite material is created.
     // Procedural sky and a generated reflection environment; no image assets.
     SN.skyUniforms = {
-      top: { value: new SN.T.Color(0x1673d1) },
-      horizon: { value: new SN.T.Color(0x8ac9ef) },
+      top: { value: new SN.T.Color(0x728b9e) },
+      horizon: { value: new SN.T.Color(0xb9c5cb) },
       night: { value: 0 },
       sunDir: { value: new SN.T.Vector3(-0.85, 0.2, -0.35) },
       moonDir: { value: new SN.T.Vector3(0.55, 0.42, 0.72) },
@@ -799,13 +800,13 @@ void main(){
   // Startup phase 49: keep this order relative to the other systems.
 
   SN.registerInit(49, function initializeRenderer49() {
-    SN.dayTop = new SN.T.Color(0x1673d1);
-    SN.sunsetTop = new SN.T.Color(0x677aaf);
-    SN.nightTop = new SN.T.Color(0x10264d);
-    SN.dayHorizon = new SN.T.Color(0x8ac9ef);
-    SN.sunsetHorizon = new SN.T.Color(0xffbd86);
-    SN.nightHorizon = new SN.T.Color(0x355681);
-    SN.warmSun = new SN.T.Color(0xffae68);
+    SN.dayTop = new SN.T.Color(0x728b9e);
+    SN.sunsetTop = new SN.T.Color(0x777d8a);
+    SN.nightTop = new SN.T.Color(0x1d293a);
+    SN.dayHorizon = new SN.T.Color(0xb9c5cb);
+    SN.sunsetHorizon = new SN.T.Color(0xd4b69b);
+    SN.nightHorizon = new SN.T.Color(0x465867);
+    SN.warmSun = new SN.T.Color(0xe4bc92);
     SN.daySun = new SN.T.Color(0xfff1d6);
     SN.hazeLinear = new SN.T.Color(0x93a6ad).convertSRGBToLinear();
     SN.fogTmp = new SN.T.Color();

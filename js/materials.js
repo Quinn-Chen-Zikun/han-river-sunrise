@@ -721,10 +721,10 @@
     const size = SN.PBR_TEX_SIZE,
       height = SN.noiseHeightCanvas(size, seed, 0.5, 0.16, 0.12),
       hctx = height.getContext("2d");
-    const color = SN.colorFromHeight(height, [84, 102, 70], 0.38, seed + 3), cctx = color.getContext("2d");
+    const color = SN.colorFromHeight(height, [88, 98, 77], 0.38, seed + 3), cctx = color.getContext("2d");
     for (let i = 0; i < 9000; i++) {
       const x = SN.texRange(0, size), y = SN.texRange(0, size), v = SN.texRange(0, 1);
-      cctx.strokeStyle = v > 0.55 ? "rgba(110,128,82,.5)" : "rgba(48,62,40,.45)";
+      cctx.strokeStyle = v > 0.55 ? "rgba(110,119,92,.5)" : "rgba(48,62,40,.45)";
       cctx.lineWidth = SN.texRange(0.6, 1.4);
       cctx.beginPath();
       cctx.moveTo(x, y);
@@ -959,7 +959,7 @@
         hd[i + 3] = 255;
       }
     hctx.putImageData(himg, 0, 0);
-    const color = SN.colorFromHeight(height, glassTower ? [86, 149, 180] : [[219, 197, 151], [196, 111, 80], [156, 200, 190]][variant], 0.42, 811 + variant),
+    const color = SN.colorFromHeight(height, glassTower ? [146, 158, 161] : [[203, 194, 178], [166, 120, 99], [158, 170, 165]][variant], 0.42, 811 + variant),
       cctx = color.getContext("2d");
     const rough = SN.makeCanvas(w, h), rctx = rough.getContext("2d");
     rctx.fillStyle = glassTower ? "#6a6a6a" : "#dcdcdc";
@@ -970,7 +970,7 @@
     // Masonry courses and glazed shop-house tiles are baked into the shared atlas.
     if (variant === 1 || variant === 2) {
       const tileH = variant === 1 ? 16 : 48, tileW = variant === 1 ? 48 : 64;
-      cctx.strokeStyle = variant === 1 ? "#8d6554" : "#759c98";
+      cctx.strokeStyle = variant === 1 ? "#8d6554" : "#818d87";
       cctx.lineWidth = variant === 1 ? 2 : 3;
       for (let y = 0; y < h; y += tileH) {
         cctx.beginPath(); cctx.moveTo(0, y); cctx.lineTo(w, y); cctx.stroke();
@@ -999,7 +999,7 @@
         cctx.fillStyle = glass;
         cctx.fillRect(x, y, ww, wh);
         // Bright sky reflections, mullions and blinds remain readable without near geometry.
-        cctx.fillStyle = glassTower ? "#8bc3df" : "#6799b1";
+        cctx.fillStyle = glassTower ? "#a5b3b7" : "#8c9b9e";
         cctx.fillRect(x + 3, y + 3, ww - 6, wh * 0.24);
         if (v > 0.62) {
           cctx.fillStyle = v > 0.85 ? "#e2c390" : "#b6c9c9";
@@ -1007,7 +1007,7 @@
           cctx.fillStyle = "#8a9597";
           for (let blind = 8; blind < wh * 0.4; blind += 7) cctx.fillRect(x + 3, y + blind, ww - 6, 1);
         }
-        cctx.strokeStyle = glassTower ? "#b5d5df" : "#e5d8bc";
+        cctx.strokeStyle = glassTower ? "#bcc3c2" : "#e5d8bc";
         cctx.lineWidth = 3;
         cctx.strokeRect(x, y, ww, wh);
         cctx.fillStyle = "#c8d4d3";

@@ -2241,7 +2241,7 @@
         topSpeed: 44, accel: 18, mass: 0.34, grip: 11.5, damage: 1.7, pitch: 102, cruise: 13, bike: true, sportbike: true }
     );
     SN.vehicleGeometry = SN.vehicleSpecs.map(spec => SN.buildVehicleGeometry(spec));
-    SN.carColors = [0xd82b32, 0x1761cf, 0xffa51e, 0x242d3c, 0x16814e, 0x9daebe, 0x854bbd, 0x13a7ab, 0xf16026, 0xb82558, 0xf4ce39, 0xdbe1e5];
+    SN.carColors = [0x80504c, 0x526776, 0xc4c7c4, 0x242d3c, 0x677268, 0x9daebe, 0x716772, 0x778481, 0x9a7d62, 0x6d5358, 0xc3b99e, 0xd9dcd7];
     SN.cars = [];
     SN.carPaintSurface = SN.getSurface("carPaint");
     SN.vehicleAccentMats = [

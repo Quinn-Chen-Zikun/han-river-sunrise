@@ -14,15 +14,15 @@
     SN.addProp(x, z, Math.max(0.75, 0.85 * scale), Math.max(0.75, 0.85 * scale), 6.2 * scale);
     SN.record(SN.trunkBatch, x, y + 3.1 * scale, z, 0.42 * scale, 6.2 * scale, 0.42 * scale);
     if (willow) {
-      SN.record(SN.leafBatch, x, y + 7.1 * scale, z, 4.9 * scale, 2.8 * scale, 4.9 * scale, SN.rand(0, SN.TAU), 0x79a36c);
-      SN.record(SN.leafBatch, x, y + 6.1 * scale, z, 3.5 * scale, 1.7 * scale, 3.4 * scale, SN.rand(0, SN.TAU), 0x5f8a5d);
+      SN.record(SN.leafBatch, x, y + 7.1 * scale, z, 4.9 * scale, 2.8 * scale, 4.9 * scale, SN.rand(0, SN.TAU), 0x8c9a7e);
+      SN.record(SN.leafBatch, x, y + 6.1 * scale, z, 3.5 * scale, 1.7 * scale, 3.4 * scale, SN.rand(0, SN.TAU), 0x77886e);
       for (let i = 0; i < 5; i++) {
         const a = i * SN.TAU / 5;
-        SN.record(SN.willowBatch, x + Math.sin(a) * 3.6 * scale, y + 4.9 * scale, z + Math.cos(a) * 3.6 * scale, 1.25 * scale, 3.8 * scale, 1.3 * scale, a, 0x7ca476);
+        SN.record(SN.willowBatch, x + Math.sin(a) * 3.6 * scale, y + 4.9 * scale, z + Math.cos(a) * 3.6 * scale, 1.25 * scale, 3.8 * scale, 1.3 * scale, a, 0x8b9a7e);
       }
       for (let i = 0; i < 4; i++) {
         const a = i * SN.TAU / 4 + 0.4;
-        SN.record(SN.willowBatch, x + Math.sin(a) * 4.5 * scale, y + 4.4 * scale, z + Math.cos(a) * 4.5 * scale, 0.9 * scale, 3.1 * scale, 0.95 * scale, a, 0x6b956b);
+        SN.record(SN.willowBatch, x + Math.sin(a) * 4.5 * scale, y + 4.4 * scale, z + Math.cos(a) * 4.5 * scale, 0.9 * scale, 3.1 * scale, 0.95 * scale, a, 0x7d8f75);
       }
     }
     else {
@@ -30,10 +30,10 @@
       // foliage instead of a single low-poly ball.
       for (let i = 0; i < 3; i++) {
         const a = i * SN.TAU / 3;
-        SN.record(SN.leafBatch, x + Math.sin(a) * 1.2 * scale, y + (6.1 + i * 0.45) * scale, z + Math.cos(a) * 1.2 * scale, 2.9 * scale, 3 * scale, 2.8 * scale, a, [0x7d9c80, 0x8aab84, 0xa3bb8e][i]);
+        SN.record(SN.leafBatch, x + Math.sin(a) * 1.2 * scale, y + (6.1 + i * 0.45) * scale, z + Math.cos(a) * 1.2 * scale, 2.9 * scale, 3 * scale, 2.8 * scale, a, [0x899480, 0x99a28b, 0xaeb49a][i]);
       }
-      SN.record(SN.leafBatch, x + SN.rand(-0.4, 0.4) * scale, y + 4.9 * scale, z + SN.rand(-0.4, 0.4) * scale, 3.6 * scale, 2.1 * scale, 3.4 * scale, SN.rand(0, SN.TAU), 0x6c8e68);
-      SN.record(SN.leafBatch, x + SN.rand(-0.5, 0.5) * scale, y + 8.35 * scale, z + SN.rand(-0.5, 0.5) * scale, 2 * scale, 1.8 * scale, 1.9 * scale, SN.rand(0, SN.TAU), 0xa2bb90);
+      SN.record(SN.leafBatch, x + SN.rand(-0.4, 0.4) * scale, y + 4.9 * scale, z + SN.rand(-0.4, 0.4) * scale, 3.6 * scale, 2.1 * scale, 3.4 * scale, SN.rand(0, SN.TAU), 0x818e75);
+      SN.record(SN.leafBatch, x + SN.rand(-0.5, 0.5) * scale, y + 8.35 * scale, z + SN.rand(-0.5, 0.5) * scale, 2 * scale, 1.8 * scale, 1.9 * scale, SN.rand(0, SN.TAU), 0xabb297);
     }
   };
 
@@ -442,12 +442,12 @@
       brick: SN.pbrMat("brick", 0xffe8dc, { uvScale: 0.44, roughness: 1 }),
       cream: SN.pbrMat("stucco", 0xf2e4c8, { uvScale: 0.36, roughness: 1, metalness: 0.02 }),
       glass: SN.pbrMat("glass", 0xc2dde0, { uvScale: 0.5, metalness: 0.62, roughness: 1, envMapIntensity: 1.1 }),
-      gold: SN.pbrMat("metal", 0xffc34c, { uvScale: 0.45, metalness: 0.82, roughness: 0.42 }),
-      teal: SN.pbrMat("metal", 0x69a69c, { uvScale: 0.5, metalness: 0.45, roughness: 0.75 }),
+      gold: SN.pbrMat("metal", 0xbba36c, { uvScale: 0.45, metalness: 0.82, roughness: 0.42 }),
+      teal: SN.pbrMat("metal", 0x879c92, { uvScale: 0.5, metalness: 0.45, roughness: 0.75 }),
       dark: SN.pbrMat("metal", 0x53666c, { uvScale: 0.45, metalness: 0.4, roughness: 0.86 }),
       white: SN.pbrMat("stucco", 0xf0e8d8, { uvScale: 0.4, roughness: 1, metalness: 0.02 }),
-      red: SN.pbrMat("paint", 0xf2442f, { uvScale: 0.5, roughness: 0.92 }),
-      grass: SN.pbrMat("grass", 0xadc09a, { uvScale: 0.8, roughness: 1 }),
+      red: SN.pbrMat("paint", 0xa96050, { uvScale: 0.5, roughness: 0.92 }),
+      grass: SN.pbrMat("grass", 0xb5bca5, { uvScale: 0.8, roughness: 1 }),
       light: SN.pbrMat("paint", 0xffe9c8, { uvScale: 0.5, emissive: 0x9fe0cc, emissiveIntensity: 0.7, roughness: 0.42 })
     };
     SN.cityPalette.silver = SN.pbrMat("metal", 0xb4d5ec, { uvScale: 0.16, metalness: 0.6, roughness: 0.5, envMapIntensity: 0.7 });
@@ -462,13 +462,13 @@
       SN.buildingMats[3].onBeforeCompile(shader);
       shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n vUv=uv*vec2(18.,16.);");
     };
-    SN.cityPalette.curtain.color.copy(SN.srgb(0xc2e2f1)); SN.neonMats.push(SN.cityPalette.curtain);
+    SN.cityPalette.curtain.color.copy(SN.srgb(0xc2cccd)); SN.neonMats.push(SN.cityPalette.curtain);
     SN.cityPalette.goldFacade = SN.buildingMats[3].clone();
     SN.cityPalette.goldFacade.onBeforeCompile = shader => {
       SN.buildingMats[3].onBeforeCompile(shader);
       shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n vUv=uv*vec2(4.,8.6);");
     };
-    SN.cityPalette.goldFacade.color.copy(SN.srgb(0xffd16c)); SN.neonMats.push(SN.cityPalette.goldFacade);
+    SN.cityPalette.goldFacade.color.copy(SN.srgb(0xc4b38c)); SN.neonMats.push(SN.cityPalette.goldFacade);
     const silverCompile = SN.cityPalette.silver.onBeforeCompile;
     SN.cityPalette.silver.onBeforeCompile = shader => {
       silverCompile(shader);
@@ -691,9 +691,9 @@
         SN.record(SN.trunkBatch, tx, ty + 3.4, tz, 0.5, 6.8, 0.5);
         for (let i = 0; i < 3; i++) {
           const a = i * SN.TAU / 3;
-          SN.record(SN.leafBatch, tx + Math.sin(a) * 1.3, ty + 6.7 + i * 0.5, tz + Math.cos(a) * 1.3, 3.1, 3.2, 3, a, [0x7d9c80, 0x8aab84, 0xa3bb8e][i]);
+          SN.record(SN.leafBatch, tx + Math.sin(a) * 1.3, ty + 6.7 + i * 0.5, tz + Math.cos(a) * 1.3, 3.1, 3.2, 3, a, [0x899480, 0x99a28b, 0xaeb49a][i]);
         }
-        SN.record(SN.leafBatch, tx, ty + 5.4, tz, 3.9, 2.3, 3.7, SN.rand(0, SN.TAU), 0x6c8e68);
+        SN.record(SN.leafBatch, tx, ty + 5.4, tz, 3.9, 2.3, 3.7, SN.rand(0, SN.TAU), 0x818e75);
       }
       for (let i = 0; i < 9; i++)
         SN.cityPart(g, "red", -64 + i * 16, 0.65, 25, 6, 0.3, 1.5);
@@ -1064,7 +1064,7 @@
     }
     SN.trunkMat = SN.pbrMat("wood", 0xc8a482, { uvScale: 1.1, roughness: 1, metalness: 0, envMapIntensity: 0.2 });
     SN.foliageFocus = { value: new SN.T.Vector3() };
-    SN.leafMat = SN.pbrMat("grass", 0xffffff, { uvScale: 0.4, flatShading: true, roughness: 1, metalness: 0, envMapIntensity: 0.25, emissive: 0x355d45, emissiveIntensity: 0.18 });
+    SN.leafMat = SN.pbrMat("grass", 0xffffff, { uvScale: 0.4, flatShading: true, roughness: 1, metalness: 0, envMapIntensity: 0.25, emissive: 0x5a6251, emissiveIntensity: 0.08 });
     const leafCompile = SN.leafMat.onBeforeCompile;
     SN.leafMat.customProgramCacheKey = () => "foliage-camera-corridor-v2";
     SN.leafMat.onBeforeCompile = shader => {
